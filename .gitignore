@@ -1,9 +1,11 @@
 /bin/
+/cmake-build-default/
 /build/
 **/__pycache__/
 *.swp
 *~
 *.DS_Store
+*.idea
 AMPenv/
 .vscode
 ompl/build
