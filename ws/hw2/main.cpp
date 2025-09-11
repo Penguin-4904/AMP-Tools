@@ -5,7 +5,7 @@
 #include "hw/HW2.h"
 
 // Include any custom headers you created in your workspace
-#include "MyBugAlgorithm.h"
+#include "Bug1.h"
 
 using namespace amp;
 
@@ -35,9 +35,10 @@ int main(int argc, char** argv) {
     Problem2D problem = EnvironmentTools::generateRandom(spec); // Random environment
     */
 
-    // Declare your algorithm object 
-    MyBugAlgorithm algo;
-    
+    // Declare your algorithm object
+
+    Bug1 algo;
+    LOG("Start");
     {
         // Call your algorithm on the problem
         amp::Path2D path = algo.plan(problem);
@@ -68,13 +69,13 @@ int main(int argc, char** argv) {
     Visualizer::saveFigures(true, "hw2_figs");
 
 
-    HW2::grade(algo, "kabr4152@colorado.edu", argc, argv);
+    // HW2::grade(algo, "kabr4152@colorado.edu", argc, argv);
     
     /* If you want to reconstruct your bug algorithm object every trial (to reset member variables from scratch or initialize), use this method instead*/
-    //HW2::grade<MyBugAlgorithm>("nonhuman.biologic@myspace.edu", argc, argv, constructor_parameter_1, constructor_parameter_2, etc...);
+    //HW2::grade<Bug1>("nonhuman.biologic@myspace.edu", argc, argv, constructor_parameter_1, constructor_parameter_2, etc...);
     
     // This will reconstruct using the default constructor every trial
-    //HW2::grade<MyBugAlgorithm>("nonhuman.biologic@myspace.edu", argc, argv);
+    //HW2::grade<Bug1>("nonhuman.biologic@myspace.edu", argc, argv);
 
     return 0;
 }
