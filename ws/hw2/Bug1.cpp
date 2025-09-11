@@ -3,34 +3,88 @@
 // Implement your methods in the `.cpp` file, for example:
 amp::Path2D Bug1::plan(const amp::Problem2D& problem) {
 
-    // Your algorithm solves the problem and generates a path. Here is a hard-coded to path for now...
     amp::Path2D path;
     path.waypoints.push_back(problem.q_init);
 
-    // Move Towards Goal
     Eigen::Vector2d dir = (problem.q_goal - path.waypoints.back()).normalized();
     Eigen::Vector2d q_next = dir * step_size + path.waypoints.back();
+
+    Eigen::Rotation2D<double> rot(M_PI / 36);
+    Eigen::Rotation2D<double> rot90CW(-M_PI / 2);
+
     while (true){
-        while (true){
+        while (true){ // Move Towards Goal
             dir = (problem.q_goal - path.waypoints.back()).normalized();
             q_next = dir * step_size + path.waypoints.back();
             if ((problem.q_goal - path.waypoints.back()).norm() < step_size){
-                path.waypoints.push_back(problem.q_goal);
+                path.waypoints.push_back(problem.q_goal); // reached goal
                 return path;
-            } else if(check_collisions(q_next)) {
-                break;
+            } else if(check_collisions(q_next, problem.obstacles)) {
+                break; // detected obstacle
             } else {
                 path.waypoints.push_back(q_next);
             }
         }
-        Eigen::Vector2d q_hit = path.waypoints.back();
-        size_t q_hit_index = path.waypoints.size() - 1;
+        // initialize variables for perimeter following
+        size_t q_hit_i = path.waypoints.size() - 1;
+        size_t q_leave_i = path.waypoints.size() - 1;
+        double dist = (problem.q_goal - path.waypoints[q_hit_i]).norm();
+        double best_dist = dist;
 
+        while(true){
+            // Turn away from obstacle to avoid collision and ensure 90 deg sensor can see obstacle
+            while(check_collisions(q_next, problem.obstacles) || !check_collisions((rot90CW * dir) * step_size + path.waypoints.back(), problem.obstacles)){ // Rotate left
+                dir = rot * dir;
+                q_next = dir * step_size + path.waypoints.back();
+            }
+            path.waypoints.push_back(q_next);
+            // Check if point is closer to goal than all other points and store it if so.
+            dist = (problem.q_goal - path.waypoints.back()).norm();
+            if (dist < best_dist) {
+                q_leave_i = path.waypoints.size() - 1;
+                best_dist = dist;
+            }
+            // Check if returned to leave point
+            if (((path.waypoints.size() - q_hit_i) > 4) && (path.waypoints[q_hit_i] - path.waypoints.back()).norm() <= step_size){
+                break;
+            }
+            // Turn & move towards obstacle if robot left perimeter
+            while (!check_collisions((rot90CW * dir) * step_size + path.waypoints.back(), problem.obstacles)){
+                dir = rot90CW * dir;
+                path.waypoints.push_back(dir * step_size + path.waypoints.back());
+                // Check if point is closer to goal than all other points and store it if so.
+                dist = (problem.q_goal - path.waypoints.back()).norm();
+                if (dist < best_dist){
+                    q_leave_i = path.waypoints.size() - 1;
+                    best_dist = dist;
+                }
+            }
+            // Check if returned to leave point
+            if (((path.waypoints.size() - q_hit_i) > 4) && (path.waypoints[q_hit_i] - path.waypoints.back()).norm() <= step_size){
+                break;
+            }
+            // Reset q_next for next loop
+            q_next = dir * step_size + path.waypoints.back();
+        }
 
+        // Return to the closest leave point to goal via the fastest path
+        if(q_leave_i - q_hit_i < (path.waypoints.size() - 1 - q_leave_i)){
+            for(int i = q_hit_i; i <= q_leave_i; i++){
+                path.waypoints.push_back(path.waypoints[i]);
+            }
+        } else {
+            for(int i = path.waypoints.size() - 1; i >= q_leave_i; i--){
+                path.waypoints.push_back(path.waypoints[i]);
+            }
+        }
+
+        // Check if there is path towards goal from leave point
+        dir = (problem.q_goal - path.waypoints.back()).normalized();
+        q_next = dir * step_size + path.waypoints.back();
+        if (check_collisions(q_next, problem.obstacles)){
+            break;
+        }
     }
-
-    path.waypoints.push_back(problem.q_goal);
-
     return path;
 }
 
