@@ -1,15 +1,17 @@
-#include "Bug1.h"
+#include "Bug2.h"
 
 // Implement your methods in the `.cpp` file, for example:
-amp::Path2D Bug1::plan(const amp::Problem2D& problem) {
+amp::Path2D Bug2::plan(const amp::Problem2D& problem) {
 
     amp::Path2D path;
     path.waypoints.push_back(problem.q_init);
 
-    Eigen::Vector2d step = (problem.q_goal - path.waypoints.back()).normalized() * step_size;
-
     Eigen::Rotation2D<double> rotCW(-M_PI / 36); // rotation matrix for 5 deg CCW
     Eigen::Rotation2D<double> rotCCW(M_PI / 36); // rotation matrix for 5 deg CW
+
+    Eigen::Vector2d w = (problem.q_goal - problem.q_init).normalized();
+    Eigen::Vector2d step = w * step_size;
+    Eigen::Vector2d v(-w[1], w[0]);
 
     while (true){
         while (true){ // Move Towards Goal
@@ -24,12 +26,14 @@ amp::Path2D Bug1::plan(const amp::Problem2D& problem) {
         }
         // initialize variables for perimeter following
         size_t q_hit_i = path.waypoints.size() - 1;
-        size_t q_leave_i = path.waypoints.size() - 1;
-        double dist = (problem.q_goal - path.waypoints[q_hit_i]).norm();
-        double best_dist = dist;
+        double dist = (problem.q_goal - path.waypoints.back()).norm();
+        int sgn = 1;
+        if ((problem.q_init - path.waypoints.back()).norm() > (problem.q_goal - problem.q_init).norm()){
+            sgn = -1;
+        }
 
         // perimeter following loop
-        while (((path.waypoints.size() - q_hit_i) < 4) || (path.waypoints[q_hit_i] - path.waypoints.back()).norm() > step_size){
+        while (true){
             // Corner Detection
             if (!check_collisions(rotCW * (rotCW * step) + path.waypoints.back(), problem.obstacles)
                 && !check_collisions(step + path.waypoints.back(), problem.obstacles)){
@@ -43,35 +47,29 @@ amp::Path2D Bug1::plan(const amp::Problem2D& problem) {
                 step = rotCCW * step;
             }
             path.waypoints.push_back(step + path.waypoints.back());
-            // Check if point is closer to goal than all other points and store it if so.
-            dist = (problem.q_goal - path.waypoints.back()).norm();
-            if (dist < best_dist) {
-                q_leave_i = path.waypoints.size() - 1;
-                best_dist = dist;
+            // Check if crossed start to goal line.
+            w = path.waypoints.back() - problem.q_goal;
+            if ((w.dot(v) > 0 && sgn < 0) || (w.dot(v) < 0 && sgn > 0)){
+                sgn = -sgn;
+                // Check if closer to goal than hit point and can move towards goal
+                if (w.norm() < dist
+                    && !check_collisions(-w.normalized() * step_size + path.waypoints.back(), problem.obstacles)) {
+                    step = -w.normalized() * step_size;
+                    break;
+                }
             }
-        }
-        // Return to the closest leave point to goal via the fastest path
-        if(q_leave_i - q_hit_i < (path.waypoints.size() - 1 - q_leave_i)){
-            for(int i = q_hit_i; i <= q_leave_i; i++){
-                path.waypoints.push_back(path.waypoints[i]);
+            // Check if returned to original hit point
+            if (((path.waypoints.size() - q_hit_i) > 4) && (path.waypoints[q_hit_i] - path.waypoints.back()).norm() < 2*step_size){
+                LOG("No Path Found!");
+                return path;
             }
-        } else {
-            for(int i = path.waypoints.size() - 1; i >= q_leave_i; i--){
-                path.waypoints.push_back(path.waypoints[i]);
-            }
-        }
-        // Check if there is path towards goal from leave point
-        step = (problem.q_goal - path.waypoints.back()).normalized() * step_size;
-        if (check_collisions(step + path.waypoints.back(), problem.obstacles)){
-            LOG("No Path Found!");
-            break;
         }
     }
     return path;
 }
 
 /// @brief checks if point is inside any of the given obstacles.
-bool Bug1::check_collisions(Eigen::Vector2d point, std::vector<amp::Obstacle2D> obstacles) {
+bool Bug2::check_collisions(Eigen::Vector2d point, std::vector<amp::Obstacle2D> obstacles) {
     size_t numObstacles = obstacles.size();
 
     for (int i = 0; i < numObstacles; i++){
@@ -84,7 +82,7 @@ bool Bug1::check_collisions(Eigen::Vector2d point, std::vector<amp::Obstacle2D> 
 }
 
 /// @brief checks if point is inside obstacle. Assumes convex polygon obstacle.
-bool Bug1::collide_object(Eigen::Vector2d point, amp::Obstacle2D obstacle){
+bool Bug2::collide_object(Eigen::Vector2d point, amp::Obstacle2D obstacle){
     std::vector<Eigen::Vector2d>& vertices = obstacle.verticesCCW();
     size_t numVertices = vertices.size();
 
