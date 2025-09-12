@@ -12,7 +12,7 @@ amp::Path2D Bug2::plan(const amp::Problem2D& problem) {
     Eigen::Vector2d w = (problem.q_goal - problem.q_init).normalized();
     Eigen::Vector2d step = w * step_size;
     Eigen::Vector2d v(-w[1], w[0]);
-    LOG("start");
+
     while (true){
         while (true){ // Move Towards Goal
             if ((problem.q_goal - path.waypoints.back()).norm() < step_size){
@@ -40,6 +40,19 @@ amp::Path2D Bug2::plan(const amp::Problem2D& problem) {
                 && !check_collisions(step + path.waypoints.back(), problem.obstacles)){
                 path.waypoints.push_back(step + path.waypoints.back());
             }
+            // Check if crossed start to goal line
+            w = path.waypoints.back() - problem.q_goal; // Note: w is being reused to store different vector from original use
+            if ((w.dot(v) >= 0 && sgn < 0) || (w.dot(v) < 0 && sgn > 0)){
+                sgn = -sgn;
+                // Check if closer to goal than hit point and can move towards goal
+                if (w.norm() < dist
+                    && !check_collisions(-w.normalized() * step_size + path.waypoints.back(), problem.obstacles)) {
+                    step = - step / (-(v.dot(path.waypoints[path.waypoints.size() - 2] - problem.q_goal) / w.dot(v)) + 1);
+                    path.waypoints.push_back(step + path.waypoints.back()); // To ensure exactly on line
+                    step = (problem.q_goal - path.waypoints.back()).normalized() * step_size;
+                    break;
+                }
+            }
             // Edge Finding
             int i = 1;
             while (!check_collisions(step + path.waypoints.back(), problem.obstacles) && i < 180/deg_step){
@@ -50,24 +63,11 @@ amp::Path2D Bug2::plan(const amp::Problem2D& problem) {
                 step = rotCCW * step;
             }
             path.waypoints.push_back(step + path.waypoints.back());
-            // Check if crossed start to goal line.
-            w = path.waypoints.back() - problem.q_goal;
-            if ((w.dot(v) > 0 && sgn < 0) || (w.dot(v) < 0 && sgn > 0)){
-                sgn = -sgn;
-                // Check if closer to goal than hit point and can move towards goal
-                if (w.norm() < dist
-                    && !check_collisions(-w.normalized() * step_size + path.waypoints.back(), problem.obstacles)) {
-                    step = -w.normalized() * step_size;
-                    break;
-                }
-            }
             // Check if returned to original hit point
-            if (((path.waypoints.size() - q_hit_i) > 4) && (path.waypoints[q_hit_i] - path.waypoints.back()).norm() < 2*step_size){
+            if (((path.waypoints.size() - q_hit_i) > 4) && (path.waypoints[q_hit_i] - path.waypoints.back()).norm() < step_size){
                 LOG("No Path Found!");
                 return path;
             }
-
-
         }
     }
     path.waypoints.push_back(problem.q_goal);

@@ -19,35 +19,65 @@ int main(int argc, char** argv) {
     // Use WO1 from Exercise 2
     Problem2D problem1 = HW2::getWorkspace1();
 
-    Bug2 algo;
-    LOG("Start");
+    // Use WO2 from Exercise 2
+    Problem2D problem2 = HW2::getWorkspace2();
+
+    Bug1 algo1;
     {
         // Call algorithm on the problem
-        amp::Path2D path = algo.plan(problem1);
+        amp::Path2D path = algo1.plan(problem1);
 
         // Check path to make sure that it does not collide with the environment
         bool success = HW2::check(path, problem1);
 
         // Log results
-        LOG("Found valid solution to workspace 1: " << (success ? "Yes!" : "No :("));
+        LOG("Found valid solution to workspace 1 (w/ Bug1): " << (success ? "Yes!" : "No :("));
         LOG("path length: " << path.length());
 
         // Visualize the path and environment
         Visualizer::makeFigure(problem1, path);
     }
-    // Use WO2 from Exercise 2
-    Problem2D problem2 = HW2::getWorkspace2();
-//    amp::Path2D path;
-//    Visualizer::makeFigure(problem2, path);
+
     {
         // Call algorithm on the problem
-        amp::Path2D path = algo.plan(problem2);
+        amp::Path2D path = algo1.plan(problem2);
 
         // Check path to make sure that it does not collide with the environment
         bool success = HW2::check(path, problem2);
 
         // Log results
-        LOG("Found valid solution to workspace 2: " << (success ? "Yes!" : "No :("));
+        LOG("Found valid solution to workspace 2 (w/ Bug1): " << (success ? "Yes!" : "No :("));
+        LOG("path length: " << path.length());
+
+        // Visualize the path and environment
+        Visualizer::makeFigure(problem2, path);
+    }
+
+    Bug2 algo2;
+    {
+        // Call algorithm on the problem
+        amp::Path2D path = algo2.plan(problem1);
+
+        // Check path to make sure that it does not collide with the environment
+        bool success = HW2::check(path, problem1);
+
+        // Log results
+        LOG("Found valid solution to workspace 1 (w/ Bug2): " << (success ? "Yes!" : "No :("));
+        LOG("path length: " << path.length());
+
+        // Visualize the path and environment
+        Visualizer::makeFigure(problem1, path);
+    }
+
+    {
+        // Call algorithm on the problem
+        amp::Path2D path = algo2.plan(problem2);
+
+        // Check path to make sure that it does not collide with the environment
+        bool success = HW2::check(path, problem2);
+
+        // Log results
+        LOG("Found valid solution to workspace 2 (w/ Bug2): " << (success ? "Yes!" : "No :("));
         LOG("path length: " << path.length());
 
         // Visualize the path and environment
@@ -57,7 +87,7 @@ int main(int argc, char** argv) {
     Visualizer::saveFigures(true, "hw2_figs");
 
 
-    // HW2::grade(algo, "Katrina.Braun@colorado.edu", argc, argv);
+    HW2::grade(algo2, "Katrina.Braun@colorado.edu", argc, argv);
     
     /* If you want to reconstruct your bug algorithm object every trial (to reset member variables from scratch or initialize), use this method instead*/
     //HW2::grade<Bug1>("nonhuman.biologic@myspace.edu", argc, argv, constructor_parameter_1, constructor_parameter_2, etc...);

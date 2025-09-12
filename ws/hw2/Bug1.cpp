@@ -28,7 +28,7 @@ amp::Path2D Bug1::plan(const amp::Problem2D& problem) {
         double dist = (problem.q_goal - path.waypoints[q_hit_i]).norm();
         double best_dist = dist;
         // perimeter following loop
-        while (((path.waypoints.size() - q_hit_i) < 4) || (path.waypoints[q_hit_i] - path.waypoints.back()).norm() > step_size){
+        while (((path.waypoints.size() - q_hit_i) < 4) || (path.waypoints[q_hit_i] - path.waypoints.back()).norm() > 2 * step_size){
             // Corner Detection
             if (!check_collisions(rotCW * (rotCW * step) + path.waypoints.back(), problem.obstacles)
                 && !check_collisions(step + path.waypoints.back(), problem.obstacles)){

@@ -13,6 +13,6 @@ class Bug2 : public amp::BugAlgorithm {
 
     private:
         // Sets the step size and collision search distance of the algorithm.
-        double step_size = 0.01;
+        double step_size = 0.02;
         int deg_step = 5;
 };
