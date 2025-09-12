@@ -6,24 +6,20 @@ amp::Path2D Bug1::plan(const amp::Problem2D& problem) {
     amp::Path2D path;
     path.waypoints.push_back(problem.q_init);
 
-    Eigen::Vector2d dir = (problem.q_goal - path.waypoints.back()).normalized();
-    Eigen::Vector2d q_next = dir * step_size + path.waypoints.back();
+    Eigen::Vector2d step = (problem.q_goal - path.waypoints.back()).normalized() * step_size;
 
-    Eigen::Rotation2D<double> rot(M_PI / 36);
-    Eigen::Rotation2D<double> rot90CW(-M_PI / 2);
-    Eigen::Rotation2D<double> rot90CCW(M_PI / 2);
+    Eigen::Rotation2D<double> rotCW(-M_PI / 36); // rotation matrix for 5 deg CCW
+    Eigen::Rotation2D<double> rotCCW(M_PI / 36); // rotation matrix for 5 deg CW
 
     while (true){
         while (true){ // Move Towards Goal
-            dir = (problem.q_goal - path.waypoints.back()).normalized();
-            q_next = dir * step_size + path.waypoints.back();
             if ((problem.q_goal - path.waypoints.back()).norm() < step_size){
                 path.waypoints.push_back(problem.q_goal); // reached goal
                 return path;
-            } else if(check_collisions(q_next, problem.obstacles)) {
+            } else if(check_collisions(step + path.waypoints.back(), problem.obstacles)) {
                 break; // detected obstacle
             } else {
-                path.waypoints.push_back(q_next);
+                path.waypoints.push_back(step + path.waypoints.back());
             }
         }
         // initialize variables for perimeter following
@@ -31,34 +27,29 @@ amp::Path2D Bug1::plan(const amp::Problem2D& problem) {
         size_t q_leave_i = path.waypoints.size() - 1;
         double dist = (problem.q_goal - path.waypoints[q_hit_i]).norm();
         double best_dist = dist;
-        dir = rot90CCW * dir;
+
         // perimeter following loop
-        while(true){
-            if (!check_collisions((rot90CW * dir) * step_size + path.waypoints.back(), problem.obstacles)){
-                dir = rot90CW * dir;
-                q_next = dir * step_size + path.waypoints.back();
-            } else if (!check_collisions(dir * step_size + path.waypoints.back(), problem.obstacles)) {
-                q_next = dir * step_size + path.waypoints.back();
-            } else if (!check_collisions((rot90CCW * dir) * step_size + path.waypoints.back(), problem.obstacles)){
-                dir = rot90CCW * dir;
-                q_next = dir * step_size + path.waypoints.back();
-            } else {
-                dir = -dir;
-                q_next = dir * step_size + path.waypoints.back();
+        while (((path.waypoints.size() - q_hit_i) < 4) || (path.waypoints[q_hit_i] - path.waypoints.back()).norm() > step_size){
+            // Corner Detection
+            if (!check_collisions(rotCW * (rotCW * step) + path.waypoints.back(), problem.obstacles)
+                && !check_collisions(step + path.waypoints.back(), problem.obstacles)){
+                path.waypoints.push_back(step + path.waypoints.back());
             }
-            path.waypoints.push_back(q_next);
+            // Edge Finding
+            while (!check_collisions(step + path.waypoints.back(), problem.obstacles)){
+                step = rotCW * step;
+            }
+            while (check_collisions(step + path.waypoints.back(), problem.obstacles)){
+                step = rotCCW * step;
+            }
+            path.waypoints.push_back(step + path.waypoints.back());
             // Check if point is closer to goal than all other points and store it if so.
             dist = (problem.q_goal - path.waypoints.back()).norm();
             if (dist < best_dist) {
                 q_leave_i = path.waypoints.size() - 1;
                 best_dist = dist;
             }
-            // Check if returned to leave point
-            if (((path.waypoints.size() - q_hit_i) > 3) && (path.waypoints[q_hit_i] - path.waypoints.back()).norm() <= step_size){
-                break;
-            }
         }
-
         // Return to the closest leave point to goal via the fastest path
         if(q_leave_i - q_hit_i < (path.waypoints.size() - 1 - q_leave_i)){
             for(int i = q_hit_i; i <= q_leave_i; i++){
@@ -69,11 +60,10 @@ amp::Path2D Bug1::plan(const amp::Problem2D& problem) {
                 path.waypoints.push_back(path.waypoints[i]);
             }
         }
-
         // Check if there is path towards goal from leave point
-        dir = (problem.q_goal - path.waypoints.back()).normalized();
-        q_next = dir * step_size + path.waypoints.back();
-        if (check_collisions(q_next, problem.obstacles)){
+        step = (problem.q_goal - path.waypoints.back()).normalized() * step_size;
+        if (check_collisions(step_size + path.waypoints.back(), problem.obstacles)){
+            LOG("No Path Found!");
             break;
         }
     }
@@ -85,6 +75,7 @@ bool Bug1::check_collisions(Eigen::Vector2d point, std::vector<amp::Obstacle2D> 
     size_t numObstacles = obstacles.size();
 
     for (int i = 0; i < numObstacles; i++){
+        // if point is in an obstacle stop search and return collision as true
         if (collide_object(point, obstacles[i])){
              return true;
         }
@@ -98,6 +89,9 @@ bool Bug1::collide_object(Eigen::Vector2d point, amp::Obstacle2D obstacle){
     size_t numVertices = vertices.size();
 
     for (int i = 0; i < numVertices - 1; i++){
+        // check if vectors from point to vertices proceed in CW or CCW direction
+        // CW (negative cross product) -> point is not in half plane defined by the vertices
+        // Since vertices are defined as CCW -> point outside polygon, return collision as false
         Eigen::Vector2d vec1 = vertices[i] - point;
         Eigen::Vector2d vec2 = vertices[i + 1] - point;
         if ((vec1(0) * vec2(1) - vec1(1) * vec2(0)) < 0){
