@@ -6,13 +6,13 @@ amp::Path2D Bug2::plan(const amp::Problem2D& problem) {
     amp::Path2D path;
     path.waypoints.push_back(problem.q_init);
 
-    Eigen::Rotation2D<double> rotCW(-M_PI / 36); // rotation matrix for 5 deg CCW
-    Eigen::Rotation2D<double> rotCCW(M_PI / 36); // rotation matrix for 5 deg CW
+    Eigen::Rotation2D<double> rotCW(deg_step * -M_PI / 180); // rotation matrix for 5 deg CCW
+    Eigen::Rotation2D<double> rotCCW(deg_step * M_PI / 180); // rotation matrix for 5 deg CW
 
     Eigen::Vector2d w = (problem.q_goal - problem.q_init).normalized();
     Eigen::Vector2d step = w * step_size;
     Eigen::Vector2d v(-w[1], w[0]);
-
+    LOG("start");
     while (true){
         while (true){ // Move Towards Goal
             if ((problem.q_goal - path.waypoints.back()).norm() < step_size){
@@ -24,6 +24,7 @@ amp::Path2D Bug2::plan(const amp::Problem2D& problem) {
                 path.waypoints.push_back(step + path.waypoints.back());
             }
         }
+
         // initialize variables for perimeter following
         size_t q_hit_i = path.waypoints.size() - 1;
         double dist = (problem.q_goal - path.waypoints.back()).norm();
@@ -40,8 +41,10 @@ amp::Path2D Bug2::plan(const amp::Problem2D& problem) {
                 path.waypoints.push_back(step + path.waypoints.back());
             }
             // Edge Finding
-            while (!check_collisions(step + path.waypoints.back(), problem.obstacles)){
+            int i = 1;
+            while (!check_collisions(step + path.waypoints.back(), problem.obstacles) && i < 180/deg_step){
                 step = rotCW * step;
+                i++;
             }
             while (check_collisions(step + path.waypoints.back(), problem.obstacles)){
                 step = rotCCW * step;
@@ -63,46 +66,12 @@ amp::Path2D Bug2::plan(const amp::Problem2D& problem) {
                 LOG("No Path Found!");
                 return path;
             }
+
+
         }
     }
+    path.waypoints.push_back(problem.q_goal);
     return path;
-}
-
-/// @brief checks if point is inside any of the given obstacles.
-bool Bug2::check_collisions(Eigen::Vector2d point, std::vector<amp::Obstacle2D> obstacles) {
-    size_t numObstacles = obstacles.size();
-
-    for (int i = 0; i < numObstacles; i++){
-        // if point is in an obstacle stop search and return collision as true
-        if (collide_object(point, obstacles[i])){
-             return true;
-        }
-    }
-    return false;
-}
-
-/// @brief checks if point is inside obstacle. Assumes convex polygon obstacle.
-bool Bug2::collide_object(Eigen::Vector2d point, amp::Obstacle2D obstacle){
-    std::vector<Eigen::Vector2d>& vertices = obstacle.verticesCCW();
-    size_t numVertices = vertices.size();
-
-    for (int i = 0; i < numVertices - 1; i++){
-        // check if vectors from point to vertices proceed in CW or CCW direction
-        // CW (negative cross product) -> point is not in half plane defined by the vertices
-        // Since vertices are defined as CCW -> point outside polygon, return collision as false
-        Eigen::Vector2d vec1 = vertices[i] - point;
-        Eigen::Vector2d vec2 = vertices[i + 1] - point;
-        if ((vec1(0) * vec2(1) - vec1(1) * vec2(0)) < 0){
-            return false;
-        }
-    }
-
-    Eigen::Vector2d vec1 = vertices[numVertices - 1] - point;
-    Eigen::Vector2d vec2 = vertices[0] - point;
-    if ((vec1(0) * vec2(1) - vec1(1) * vec2(0)) < 0){
-        return false;
-    }
-    return true;
 }
 
 
