@@ -32,11 +32,14 @@ int main(int argc, char** argv) {
     std::vector<Obstacle2D> o_vector = CSpacePolygonRotate(r, o, n);
     Visualizer::makeFigure(o_vector, theta);
 
-    MyManipulator2D manipulator;
+    std::vector<double> links2 = {1, 0.5, 1};
+    MyManipulator2D manipulator(links2);
+
 
     // You can visualize your manipulator given an angle state like so:
-    amp::ManipulatorState test_state;
-    test_state.setZero();
+    amp::ManipulatorState test_state = manipulator.getConfigurationFromIK(Eigen::Vector2d(2, 0));
+
+    LOG(test_state);
     // The visualizer uses your implementation of forward kinematics to show the joint positions so you can use that to test your FK algorithm
     Visualizer::makeFigure(manipulator, test_state);
 
