@@ -38,52 +38,42 @@ amp::ManipulatorState MyManipulator2D::getConfigurationFromIK(const Eigen::Vecto
         return joint_angles;
     }
 
-    double angle;
     double max_angle;
+    size_t j;
+    double end;
     double last_angle = 0;
-    double flip = 1;
+    int flip = 1;
 
-    for (int i = 0; i < n - 2; i++){
+    for (int i = 0; i < n - 1; i++){
 
         dir = end_effector_location - getJointLocation(joint_angles, i);
         dist = dir.norm();
 
-        if (dist >= r){
-            angle = 0;
-        } else {
-            angle = acos(dist/r);
+        j = 1;
+        end = m_link_lengths[n - j];
+        max_angle = (dist * dist + r * r - 2 * r * end)/(2 * dist * (r - end));
+        while (max_angle > 1){
+            j++;
+            end += m_link_lengths[n - j];
+            max_angle = (dist * dist + r * r - 2 * r * end)/(2 * dist * (r - end));
         }
 
-        r -= m_link_lengths[i];
-
-        double max_angle = (dist * dist + m_link_lengths[i] * m_link_lengths[i] - r * r)/(2 * dist * m_link_lengths[i]);
-
         if (max_angle <= -1) {
-            max_angle = M_PI;
-        } else if (max_angle >= 1){
             max_angle = 0;
         } else {
             max_angle = acos(max_angle);
         }
 
-        angle = std::min(angle, max_angle);
-
-        joint_angles[i] = atan2(dir[1], dir[0]) + angle * flip - last_angle;
-        last_angle = atan2(dir[1], dir[0]) + angle * flip;
+        joint_angles[i] = atan2(dir[1], dir[0]) + max_angle * flip - last_angle;
+        last_angle = atan2(dir[1], dir[0]) + max_angle * flip;
+        r -= m_link_lengths[i];
         flip *= -1;
     }
 
-    dir = end_effector_location - getJointLocation(joint_angles, n - 2);
+    dir = end_effector_location - getJointLocation(joint_angles, n - 1);
     dist = dir.norm();
 
-    r -= m_link_lengths[n - 2];
-
-    angle = acos((dist * dist + m_link_lengths[n - 2] * m_link_lengths[n - 2] - r * r)/(2 * dist * m_link_lengths[n - 2]));
-
-    joint_angles[n - 2] = atan2(dir[1], dir[0]) + angle * flip - last_angle;
-
-    dir = end_effector_location - getJointLocation(joint_angles, n - 1);
-    joint_angles[n - 1] = atan2(dir[1], dir[0]) - joint_angles[n - 2] - last_angle;
+    joint_angles[n - 1] = atan2(dir[1], dir[0]) - last_angle;
 
     return joint_angles;
 }

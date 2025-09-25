@@ -32,15 +32,17 @@ int main(int argc, char** argv) {
     std::vector<Obstacle2D> o_vector = CSpacePolygonRotate(r, o, n);
     Visualizer::makeFigure(o_vector, theta);
 
-    std::vector<double> links2 = {1, 0.5, 1};
+    std::vector<double> links2(20, 0.1);
     MyManipulator2D manipulator(links2);
 
+    LOG("Reach: " << manipulator.reach());
 
-    // You can visualize your manipulator given an angle state like so:
-    amp::ManipulatorState test_state = manipulator.getConfigurationFromIK(Eigen::Vector2d(2, 0));
+    Eigen::Vector2d test_point(0, 1);
 
-    LOG(test_state);
-    // The visualizer uses your implementation of forward kinematics to show the joint positions so you can use that to test your FK algorithm
+    amp::ManipulatorState test_state = manipulator.getConfigurationFromIK(test_point);
+
+    LOG("Location: " << manipulator.getJointLocation(test_state, test_state.size()) - test_point);
+
     Visualizer::makeFigure(manipulator, test_state);
 
     // Create the collision space constructor
@@ -56,6 +58,6 @@ int main(int argc, char** argv) {
     Visualizer::saveFigures(true, "hw4_figs");
 
     // Grade method
-    amp::HW4::grade<MyManipulator2D>(cspace_constructor, "nonhuman.biologic@myspace.edu", argc, argv);
+    amp::HW4::grade<MyManipulator2D>(cspace_constructor, "Katrina.Braun@colorado.edu", argc, argv);
     return 0;
 }
