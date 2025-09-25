@@ -7,6 +7,7 @@
 // Include the headers for HW4 code
 #include "CSpaceSkeleton.h"
 #include "ManipulatorSkeleton.h"
+#include "2DRidgidBodyCSpace.h"
 
 // Include the header of the shared class
 #include "HelpfulClass.h"
@@ -17,13 +18,27 @@ int main(int argc, char** argv) {
     /* Include this line to have different randomized environments every time you run your code (NOTE: this has no affect on grade()) */
     amp::RNG::seed(amp::RNG::randiUnbounded());
 
+    std::vector<Eigen::Vector2d> vertices = {Eigen::Vector2d(0, 0), Eigen::Vector2d(1, 2), Eigen::Vector2d(0, 2)};
+    std::size_t n = 12;
+    std::vector<double> theta;
+    for (int i = 0; i < n; i++){
+        theta.push_back(i * 2 * M_PI / n);
+    }
+
+    Polygon r(vertices);
+    Obstacle2D o(vertices);
+    Obstacle2D obstacle_out;
+
+    std::vector<Obstacle2D> o_vector = CSpacePolygonRotate(r, o, n);
+    Visualizer::makeFigure(o_vector, theta);
+
     MyManipulator2D manipulator;
 
     // You can visualize your manipulator given an angle state like so:
     amp::ManipulatorState test_state;
     test_state.setZero();
     // The visualizer uses your implementation of forward kinematics to show the joint positions so you can use that to test your FK algorithm
-    Visualizer::makeFigure(manipulator, test_state); 
+    Visualizer::makeFigure(manipulator, test_state);
 
     // Create the collision space constructor
     std::size_t n_cells = 5;
@@ -32,9 +47,9 @@ int main(int argc, char** argv) {
     // Create the collision space using a given manipulator and environment
     std::unique_ptr<amp::GridCSpace2D> cspace = cspace_constructor.construct(manipulator, HW4::getEx3Workspace1());
 
-    // You can visualize your cspace 
+    // You can visualize your cspace
     Visualizer::makeFigure(*cspace);
-
+//
     Visualizer::saveFigures(true, "hw4_figs");
 
     // Grade method
