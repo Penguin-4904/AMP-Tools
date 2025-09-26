@@ -7,7 +7,7 @@
 #include "hw/HW4.h"
 
 // Derive the amp::LinkManipulator2D class
-class MyManipulator2D : public amp::LinkManipulator2D {
+class Manipulator2D : public amp::LinkManipulator2D {
     public:
 
         // using base class constructors

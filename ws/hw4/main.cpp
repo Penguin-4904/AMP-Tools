@@ -6,7 +6,7 @@
 
 // Include the headers for HW4 code
 #include "CSpaceSkeleton.h"
-#include "ManipulatorSkeleton.h"
+#include "Manipulator2D.h"
 #include "2DRidgidBodyCSpace.h"
 
 // Include the header of the shared class
@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
 
     //std::vector<double> links2 = {RNG::randd(0, 1), RNG::randd(0, 1), RNG::randd(0, 1)};
     std::vector<double> links2 = {0.4, 0.4, 0.1};
-    MyManipulator2D manipulator(links2);
+    Manipulator2D manipulator(links2);
 
     //ManipulatorState test_state(3);
     //test_state << RNG::randd(0, 2*M_PI), RNG::randd(0, 2*M_PI), RNG::randd(0, 2*M_PI);
@@ -69,6 +69,6 @@ int main(int argc, char** argv) {
     Visualizer::saveFigures(true, "hw4_figs");
 
     // Grade method
-    amp::HW4::grade<MyManipulator2D>(cspace_constructor, "Katrina.Braun@colorado.edu", argc, argv);
+    amp::HW4::grade<Manipulator2D>(cspace_constructor, "Katrina.Braun@colorado.edu", argc, argv);
     return 0;
 }
