@@ -52,17 +52,25 @@ amp::ManipulatorState MyManipulator2D::getConfigurationFromIK(const Eigen::Vecto
         j = 1;
         end = m_link_lengths[n - j];
         max_angle = (dist * dist + r * r - 2 * r * end)/(2 * dist * (r - end));
+        LOG("Angle i: " << max_angle);
+        LOG("R: " << r);
+        LOG("End: " << end);
+        LOG("Dist: " <<dist);
         while (max_angle > 1){
             j++;
             end += m_link_lengths[n - j];
             max_angle = (dist * dist + r * r - 2 * r * end)/(2 * dist * (r - end));
         }
 
+//        max_angle = acos(max_angle);
+
         if (max_angle <= -1) {
             max_angle = 0;
         } else {
             max_angle = acos(max_angle);
         }
+
+        LOG("Angle f: " << max_angle);
 
         joint_angles[i] = atan2(dir[1], dir[0]) + max_angle * flip - last_angle;
         last_angle = atan2(dir[1], dir[0]) + max_angle * flip;

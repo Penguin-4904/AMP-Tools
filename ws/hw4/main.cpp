@@ -16,7 +16,7 @@ using namespace amp;
 
 int main(int argc, char** argv) {
     /* Include this line to have different randomized environments every time you run your code (NOTE: this has no affect on grade()) */
-    amp::RNG::seed(amp::RNG::randiUnbounded());
+    RNG::seed(amp::RNG::randiUnbounded());
 
     std::vector<Eigen::Vector2d> vertices = {Eigen::Vector2d(0, 0), Eigen::Vector2d(1, 2), Eigen::Vector2d(0, 2)};
     std::size_t n = 12;
@@ -30,20 +30,31 @@ int main(int argc, char** argv) {
     Obstacle2D obstacle_out;
 
     std::vector<Obstacle2D> o_vector = CSpacePolygonRotate(r, o, n);
-    Visualizer::makeFigure(o_vector, theta);
+    //Visualizer::makeFigure(o_vector, theta);
 
-    std::vector<double> links2(20, 0.1);
+    //std::vector<double> links2 = {RNG::randd(0, 1), RNG::randd(0, 1), RNG::randd(0, 1)};
+    std::vector<double> links2 = {0.04, 0.6, 0.1};
     MyManipulator2D manipulator(links2);
 
-    LOG("Reach: " << manipulator.reach());
+//    ManipulatorState test_state(3);
+//    test_state << RNG::randd(0, 2*M_PI), RNG::randd(0, 2*M_PI), RNG::randd(0, 2*M_PI);
 
-    Eigen::Vector2d test_point(0, 1);
+    Eigen::Vector2d test_point(-0.1, 0.5);// manipulator.getJointLocation(test_state, test_state.size());
 
-    amp::ManipulatorState test_state = manipulator.getConfigurationFromIK(test_point);
+    ManipulatorState test_state2 = manipulator.getConfigurationFromIK(test_point);
 
-    LOG("Location: " << manipulator.getJointLocation(test_state, test_state.size()) - test_point);
-
-    Visualizer::makeFigure(manipulator, test_state);
+    LOG("Location: " << manipulator.getJointLocation(test_state2, test_state2.size()) - test_point);
+    double dist = (manipulator.getJointLocation(test_state2, test_state2.size()) - test_point).norm();
+    if (dist > pow(10, -10)){
+        Visualizer::makeFigure(manipulator, test_state2);
+        //LOG("Test Point: " << test_point);
+        LOG("Actuator Point: " << manipulator.getJointLocation(test_state2, test_state2.size()));
+        LOG("Link 1 size: " << manipulator.getLinkLengths()[0]);
+        LOG("Link 2 size: " << manipulator.getLinkLengths()[1]);
+        LOG("Link 3 size: " << manipulator.getLinkLengths()[2]);
+    }
+    //Visualizer::makeFigure(manipulator, test_state2);
+    //Visualizer::makeFigure(manipulator, test_state);
 
     // Create the collision space constructor
     std::size_t n_cells = 5;
@@ -53,11 +64,11 @@ int main(int argc, char** argv) {
     std::unique_ptr<amp::GridCSpace2D> cspace = cspace_constructor.construct(manipulator, HW4::getEx3Workspace1());
 
     // You can visualize your cspace
-    Visualizer::makeFigure(*cspace);
+    //Visualizer::makeFigure(*cspace);
 //
     Visualizer::saveFigures(true, "hw4_figs");
 
     // Grade method
-    amp::HW4::grade<MyManipulator2D>(cspace_constructor, "Katrina.Braun@colorado.edu", argc, argv);
+    //amp::HW4::grade<MyManipulator2D>(cspace_constructor, "Katrina.Braun@colorado.edu", argc, argv);
     return 0;
 }
