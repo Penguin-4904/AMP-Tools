@@ -13,9 +13,9 @@ class Manipulator2D : public amp::LinkManipulator2D {
         // using base class constructors
         using LinkManipulator2D::LinkManipulator2D;
 
-        // Override this method for implementing forward kinematics
+        /// @brief finds the location of the specified joint given a manipulator state (Forward Kinematics)
         virtual Eigen::Vector2d getJointLocation(const amp::ManipulatorState& state, uint32_t joint_index) const override;
 
-        // Override this method for implementing inverse kinematics
+        /// @brief finds one configuration for an n-link manipulator given a desired end effector location (Inverse Kinematics)
         virtual amp::ManipulatorState getConfigurationFromIK(const Eigen::Vector2d& end_effector_location) const override;
 };

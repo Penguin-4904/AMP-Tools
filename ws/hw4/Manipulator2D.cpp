@@ -1,11 +1,6 @@
 #include "Manipulator2D.h"
 
-
-//Manipulator2D::Manipulator2D()
-//    : LinkManipulator2D({1.0, 1.0}) // Default to a 2-link with all links of 1.0 length
-//{}
-
-// Override this method for implementing forward kinematics
+/// @brief finds the location of the specified joint given a manipulator state (Forward Kinematics)
 Eigen::Vector2d Manipulator2D::getJointLocation(const amp::ManipulatorState& state, uint32_t joint_index) const {
     Eigen::Vector2d position = m_base_location;
     double angle = 0;
@@ -20,9 +15,8 @@ Eigen::Vector2d Manipulator2D::getJointLocation(const amp::ManipulatorState& sta
     return position;
 }
 
-// Override this method for implementing inverse kinematics
+/// @brief finds one configuration for an n-link manipulator given a desired end effector location (Inverse Kinematics)
 amp::ManipulatorState Manipulator2D::getConfigurationFromIK(const Eigen::Vector2d& end_effector_location) const {
-    // Implement inverse kinematics here
 
     std::size_t n = nLinks();
     amp::ManipulatorState joint_angles(n);

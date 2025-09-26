@@ -5,7 +5,7 @@
 #include "hw/HW4.h"
 
 // Include the headers for HW4 code
-#include "CSpaceSkeleton.h"
+#include "CSpace.h"
 #include "Manipulator2D.h"
 #include "2DRidgidBodyCSpace.h"
 
@@ -16,6 +16,7 @@ int main(int argc, char** argv) {
     /* Include this line to have different randomized environments every time you run your code (NOTE: this has no affect on grade()) */
     RNG::seed(amp::RNG::randiUnbounded());
 
+    // Exercise 1 Plotting
     std::vector<Eigen::Vector2d> vertices = {Eigen::Vector2d(0, 0), Eigen::Vector2d(1, 2), Eigen::Vector2d(0, 2)};
     std::size_t n = 12;
     std::vector<double> theta;
@@ -23,38 +24,31 @@ int main(int argc, char** argv) {
         theta.push_back(i * 2 * M_PI / n);
     }
 
-    Polygon r(vertices);
-    Obstacle2D o(vertices);
-    Obstacle2D obstacle_out;
+    Polygon r(vertices); // Robot
+    Obstacle2D o(vertices); // Obstacle
+    Obstacle2D obstacle_out; // C-Space Obstacle
 
-    std::vector<Obstacle2D> o_vector = CSpacePolygonRotate(r, o, n);
-    //Visualizer::makeFigure(o_vector, theta);
+    std::vector<Obstacle2D> o_vector = CSpacePolygonRotate(r, o, n); // C-Space Obstacles for rotating (& translating) robot
+    Visualizer::makeFigure(o_vector, theta);
 
-    //std::vector<double> links2 = {RNG::randd(0, 1), RNG::randd(0, 1), RNG::randd(0, 1)};
-    std::vector<double> links2 = {0.4, 0.4, 0.1};
-    Manipulator2D manipulator(links2);
+    // Exercise 2 Testing & Plotting
+    // Part a)
+    std::vector<double> links1 = {0.5, 1, 0.5};
+    Manipulator2D manipulatorA(link1);
 
-    //ManipulatorState test_state(3);
-    //test_state << RNG::randd(0, 2*M_PI), RNG::randd(0, 2*M_PI), RNG::randd(0, 2*M_PI);
+    ManipulatorState test_stateA(3);
+    test_stateA << M_PI/6, M_PI/3, 7*M_PI/4;
 
-    Eigen::Vector2d test_point(-0.6, 0.15);// = manipulator.getJointLocation(test_state, test_state.size());
+    Visualizer::makeFigure(manipulatorA, test_stateA);
 
-    ManipulatorState test_state2 = manipulator.getConfigurationFromIK(test_point);
+    std::vector<double> links2 = {1, 0.5, 1};
+    Manipulator2D manipulatorB(link2);
 
-//    LOG("Location: " << manipulator.getJointLocation(test_state2, test_state2.size()) - test_point);
-//    double dist = (manipulator.getJointLocation(test_state2, test_state2.size()) - test_point).norm();
-//    if (dist > pow(10, -10)){
-//        Visualizer::makeFigure(manipulator, test_state2);
-//        LOG("Test Point: " << test_point);
-//        LOG("Actuator Point: " << manipulator.getJointLocation(test_state2, test_state2.size()));
-//        LOG("Link 1 size: " << manipulator.getLinkLengths()[0]);
-//        LOG("Link 2 size: " << manipulator.getLinkLengths()[1]);
-//        LOG("Link 3 size: " << manipulator.getLinkLengths()[2]);
-//    }
-    //Visualizer::makeFigure(manipulator, test_state2);
-    //Visualizer::makeFigure(manipulator, test_state);
+    Eigen::Vector2d test_pointB(-0.6, 0.15);
 
-    // Create the collision space constructor
+    ManipulatorState test_stateB = manipulator.getConfigurationFromIK(test_pointB);
+
+    Visualizer::makeFigure(manipulatorB, test_stateB);
 
     // Exercise 3:
     std::vector<double> links = {1, 1};
@@ -63,28 +57,24 @@ int main(int argc, char** argv) {
     ManipulatorState state(2);
     state << M_PI, M_PI;
 
-    std::size_t n_cells = 100;
+    std::size_t n_cells = 200;
     MyManipulatorCSConstructor cspace_constructor(n_cells);
 
     // Part a)
     std::unique_ptr<amp::GridCSpace2D> cspacea = cspace_constructor.construct(manip, HW4::getEx3Workspace1());
-    Visualizer::makeFigure(HW4::getEx3Workspace1(), manip, state);
+    //Visualizer::makeFigure(HW4::getEx3Workspace1(), manip, state);
     Visualizer::makeFigure(*cspacea);
-
-    //HW4::checkCSpace(cspacea, manip, HW4::getEx3Workspace1());
-
 
     // Part b)
     std::unique_ptr<amp::GridCSpace2D> cspaceb = cspace_constructor.construct(manip, HW4::getEx3Workspace2());
-    Visualizer::makeFigure(HW4::getEx3Workspace2(), manip, state);
+    //Visualizer::makeFigure(HW4::getEx3Workspace2(), manip, state);
     Visualizer::makeFigure(*cspaceb);
 
     // Part c)
     std::unique_ptr<amp::GridCSpace2D> cspacec = cspace_constructor.construct(manip, HW4::getEx3Workspace3());
-    Visualizer::makeFigure(HW4::getEx3Workspace3(), manip, state);
+    //Visualizer::makeFigure(HW4::getEx3Workspace3(), manip, state);
     Visualizer::makeFigure(*cspacec);
 
-//
     Visualizer::saveFigures(true, "hw4_figs");
 
     // Grade method

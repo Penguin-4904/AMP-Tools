@@ -41,34 +41,37 @@ bool collide_object(const Eigen::Vector2d& point, const amp::Obstacle2D& obstacl
     return true;
 }
 
+/// @brief checks if manipulator collides with any of the given obstacles for a given state.
 bool check_manipulator_collisions(const amp::LinkManipulator2D& manipulator, const amp::ManipulatorState& state, const std::vector<amp::Obstacle2D>& obstacles) {
     size_t numObstacles = obstacles.size();
 
+    // Get joint positions from state to feed to individual object collision checker
     std::vector<Eigen::Vector2d> joints;
     for (int i = 0; i < state.size() + 1; i++){
         joints.push_back(manipulator.getJointLocation(state, i));
     }
 
     for (int i = 0; i < numObstacles; i++){
-        if (collide_chain_object(joints, obstacles[i])){
+        if (collide_chain_object(joints, obstacles[i])){ // Check if joint chain collides with current object
             return true;
         }
     }
     return false;
 }
 
+/// @brief checks if the chain of joints/points collides with obstacle
 bool collide_chain_object(const std::vector<Eigen::Vector2d>& joints, const amp::Obstacle2D& obstacle){
     std::vector<Eigen::Vector2d> vertices = obstacle.verticesCCW();
     size_t numVertices = vertices.size();
     size_t numJoints = joints.size();
 
     for (int i = 0; i < numVertices - 1; i++){
-        for (int j = 0; j < joints.size() - 1; j++){
-            Eigen::Vector2d vec1 = (vertices[i] - joints[j]).normalized();
-            Eigen::Vector2d vec2 = vertices[i + 1] - joints[j];
+        for (int j = 0; j < numJoints - 1; j++){
+            Eigen::Vector2d vec1 = (vertices[i] - joints[numJoints - j - 1]).normalized();
+            Eigen::Vector2d vec2 = vertices[i + 1] - joints[numJoints - j - 1];
 
-            Eigen::Vector2d vec3 = (vertices[i] - joints[j + 1]).normalized();
-            Eigen::Vector2d vec4 = vertices[i + 1] - joints[j + 1];
+            Eigen::Vector2d vec3 = (vertices[i] - joints[numJoints - j - 2]).normalized();
+            Eigen::Vector2d vec4 = vertices[i + 1] - joints[numJoints - j - 2];
 
             if ((std::signbit(vec1(0) * vec2(1) - vec1(1) * vec2(0)) != std::signbit(vec3(0) * vec4(1) - vec3(1) * vec4(0))) &
                 (std::signbit(vec1(0) * vec3(1) - vec1(1) * vec3(0)) != std::signbit(vec2(0) * vec4(1) - vec2(1) * vec4(0)))){
@@ -78,11 +81,11 @@ bool collide_chain_object(const std::vector<Eigen::Vector2d>& joints, const amp:
     }
 
     for (int j = 0; j < joints.size() - 1; j++){
-        Eigen::Vector2d vec1 = (vertices[numVertices - 1] - joints[j]).normalized();
-        Eigen::Vector2d vec2 = vertices[0] - joints[j];
+        Eigen::Vector2d vec1 = (vertices[numVertices - 1] - joints[numJoints - j - 1]).normalized();
+        Eigen::Vector2d vec2 = vertices[0] - joints[numJoints - j - 1];
 
-        Eigen::Vector2d vec3 = (vertices[numVertices - 1] - joints[j + 1]).normalized();
-        Eigen::Vector2d vec4 = vertices[0] - joints[j + 1];
+        Eigen::Vector2d vec3 = (vertices[numVertices - 1] - joints[numJoints - j - 2]).normalized();
+        Eigen::Vector2d vec4 = vertices[0] - joints[numJoints - j - 2];
 
         if ((std::signbit(vec1(0) * vec2(1) - vec1(1) * vec2(0)) != std::signbit(vec3(0) * vec4(1) - vec3(1) * vec4(0))) &
             (std::signbit(vec1(0) * vec3(1) - vec1(1) * vec3(0)) != std::signbit(vec2(0) * vec4(1) - vec2(1) * vec4(0)))){
@@ -90,6 +93,6 @@ bool collide_chain_object(const std::vector<Eigen::Vector2d>& joints, const amp:
         }
     }
 
-    Eigen::Vector2d base = joints[0];
-    return collide_object(base, obstacle);
+    return false;
+    // return collide_object(joints[0], obstacle);
 }
