@@ -12,6 +12,35 @@
 
 using namespace amp;
 
+/// @brief formalizes steps for EX2 part a) into one function call
+Eigen::Vector2d nLinkForwardKinematics(const std::vector<double>& link_lengths, const Eigen::VectorXd& state){
+    Manipulator2D manipulator(link_lengths);
+    Visualizer::makeFigure(manipulator, state);
+    Eigen::Vector2d end_effector = manipulator.getJointLocation(state, link_lengths.size());
+    LOG("FK End Effector Location: " << end_effector);
+    return end_effector;
+}
+
+/// @brief formalizes steps for EX2 part b) into one function call
+Eigen::VectorXd nLinkInverseKinematics(const std::vector<double>& link_lengths, const Eigen::Vector2d& end_effector){
+    Manipulator2D manipulator(link_lengths);
+    Eigen::VectorXd state = manipulator.getConfigurationFromIK(end_effector);
+    Visualizer::makeFigure(manipulator, state);
+    for (int i = 0; i < link_lengths.size(); i++){
+        LOG("Theta " << i << " value: " << state[i]);
+    }
+    return state;
+}
+
+/// @brief formalizes steps for EX3 into one function call
+void DisplayCSpace(const std::vector<double>& link_lengths, const Environment2D& env, const size_t n = 200){
+    Manipulator2D manipulator(link_lengths);
+    MyManipulatorCSConstructor cspace_constructor(n);
+    std::unique_ptr<amp::GridCSpace2D> cspace = cspace_constructor.construct(manipulator, env);
+    Visualizer::makeFigure(env);
+    Visualizer::makeFigure(*cspace);
+}
+
 int main(int argc, char** argv) {
     /* Include this line to have different randomized environments every time you run your code (NOTE: this has no affect on grade()) */
     RNG::seed(amp::RNG::randiUnbounded());
@@ -34,49 +63,29 @@ int main(int argc, char** argv) {
     // Exercise 2 Testing & Plotting
     // Part a)
     std::vector<double> links1 = {0.5, 1, 0.5};
-    Manipulator2D manipulatorA(link1);
-
     ManipulatorState test_stateA(3);
     test_stateA << M_PI/6, M_PI/3, 7*M_PI/4;
 
-    Visualizer::makeFigure(manipulatorA, test_stateA);
+    nLinkForwardKinematics(links1, test_stateA);
 
+    // Part b)
     std::vector<double> links2 = {1, 0.5, 1};
-    Manipulator2D manipulatorB(link2);
+    Eigen::Vector2d test_pointB(2, 0);
 
-    Eigen::Vector2d test_pointB(-0.6, 0.15);
-
-    ManipulatorState test_stateB = manipulator.getConfigurationFromIK(test_pointB);
-
-    Visualizer::makeFigure(manipulatorB, test_stateB);
+    nLinkInverseKinematics(links2, test_pointB);
 
     // Exercise 3:
     std::vector<double> links = {1, 1};
-    Manipulator2D manip(links);
-
-    ManipulatorState state(2);
-    state << M_PI, M_PI;
-
-    std::size_t n_cells = 200;
-    MyManipulatorCSConstructor cspace_constructor(n_cells);
-
     // Part a)
-    std::unique_ptr<amp::GridCSpace2D> cspacea = cspace_constructor.construct(manip, HW4::getEx3Workspace1());
-    //Visualizer::makeFigure(HW4::getEx3Workspace1(), manip, state);
-    Visualizer::makeFigure(*cspacea);
-
+    DisplayCSpace(links, HW4::getEx3Workspace1());
     // Part b)
-    std::unique_ptr<amp::GridCSpace2D> cspaceb = cspace_constructor.construct(manip, HW4::getEx3Workspace2());
-    //Visualizer::makeFigure(HW4::getEx3Workspace2(), manip, state);
-    Visualizer::makeFigure(*cspaceb);
-
+    DisplayCSpace(links, HW4::getEx3Workspace2());
     // Part c)
-    std::unique_ptr<amp::GridCSpace2D> cspacec = cspace_constructor.construct(manip, HW4::getEx3Workspace3());
-    //Visualizer::makeFigure(HW4::getEx3Workspace3(), manip, state);
-    Visualizer::makeFigure(*cspacec);
+    DisplayCSpace(links, HW4::getEx3Workspace3());
 
     Visualizer::saveFigures(true, "hw4_figs");
 
+    MyManipulatorCSConstructor cspace_constructor(200);
     // Grade method
     amp::HW4::grade<Manipulator2D>(cspace_constructor, "Katrina.Braun@colorado.edu", argc, argv);
     return 0;
