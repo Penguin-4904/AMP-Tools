@@ -33,26 +33,26 @@ int main(int argc, char** argv) {
     //Visualizer::makeFigure(o_vector, theta);
 
     //std::vector<double> links2 = {RNG::randd(0, 1), RNG::randd(0, 1), RNG::randd(0, 1)};
-    std::vector<double> links2 = {0.04, 0.6, 0.1};
+    std::vector<double> links2 = {0.4, 0.4, 0.1};
     MyManipulator2D manipulator(links2);
 
-//    ManipulatorState test_state(3);
-//    test_state << RNG::randd(0, 2*M_PI), RNG::randd(0, 2*M_PI), RNG::randd(0, 2*M_PI);
+    //ManipulatorState test_state(3);
+    //test_state << RNG::randd(0, 2*M_PI), RNG::randd(0, 2*M_PI), RNG::randd(0, 2*M_PI);
 
-    Eigen::Vector2d test_point(-0.1, 0.5);// manipulator.getJointLocation(test_state, test_state.size());
+    Eigen::Vector2d test_point(-0.6, 0.15);// = manipulator.getJointLocation(test_state, test_state.size());
 
     ManipulatorState test_state2 = manipulator.getConfigurationFromIK(test_point);
 
-    LOG("Location: " << manipulator.getJointLocation(test_state2, test_state2.size()) - test_point);
-    double dist = (manipulator.getJointLocation(test_state2, test_state2.size()) - test_point).norm();
-    if (dist > pow(10, -10)){
-        Visualizer::makeFigure(manipulator, test_state2);
-        //LOG("Test Point: " << test_point);
-        LOG("Actuator Point: " << manipulator.getJointLocation(test_state2, test_state2.size()));
-        LOG("Link 1 size: " << manipulator.getLinkLengths()[0]);
-        LOG("Link 2 size: " << manipulator.getLinkLengths()[1]);
-        LOG("Link 3 size: " << manipulator.getLinkLengths()[2]);
-    }
+//    LOG("Location: " << manipulator.getJointLocation(test_state2, test_state2.size()) - test_point);
+//    double dist = (manipulator.getJointLocation(test_state2, test_state2.size()) - test_point).norm();
+//    if (dist > pow(10, -10)){
+//        Visualizer::makeFigure(manipulator, test_state2);
+//        LOG("Test Point: " << test_point);
+//        LOG("Actuator Point: " << manipulator.getJointLocation(test_state2, test_state2.size()));
+//        LOG("Link 1 size: " << manipulator.getLinkLengths()[0]);
+//        LOG("Link 2 size: " << manipulator.getLinkLengths()[1]);
+//        LOG("Link 3 size: " << manipulator.getLinkLengths()[2]);
+//    }
     //Visualizer::makeFigure(manipulator, test_state2);
     //Visualizer::makeFigure(manipulator, test_state);
 
@@ -69,6 +69,6 @@ int main(int argc, char** argv) {
     Visualizer::saveFigures(true, "hw4_figs");
 
     // Grade method
-    //amp::HW4::grade<MyManipulator2D>(cspace_constructor, "Katrina.Braun@colorado.edu", argc, argv);
+    amp::HW4::grade<MyManipulator2D>(cspace_constructor, "Katrina.Braun@colorado.edu", argc, argv);
     return 0;
 }
