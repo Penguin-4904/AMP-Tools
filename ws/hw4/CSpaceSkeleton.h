@@ -5,6 +5,7 @@
 
 // Include the correct homework header
 #include "hw/HW4.h"
+#include "Collision.h"
 
 // Derive the amp::GridCSpace2D class and override the missing method
 class MyGridCSpace2D : public amp::GridCSpace2D {

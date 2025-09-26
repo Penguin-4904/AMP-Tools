@@ -9,8 +9,6 @@
 #include "Manipulator2D.h"
 #include "2DRidgidBodyCSpace.h"
 
-// Include the header of the shared class
-#include "HelpfulClass.h"
 
 using namespace amp;
 
@@ -57,14 +55,35 @@ int main(int argc, char** argv) {
     //Visualizer::makeFigure(manipulator, test_state);
 
     // Create the collision space constructor
-    std::size_t n_cells = 5;
+
+    // Exercise 3:
+    std::vector<double> links = {1, 1};
+    Manipulator2D manip(links);
+
+    ManipulatorState state(2);
+    state << M_PI, M_PI;
+
+    std::size_t n_cells = 100;
     MyManipulatorCSConstructor cspace_constructor(n_cells);
 
-    // Create the collision space using a given manipulator and environment
-    std::unique_ptr<amp::GridCSpace2D> cspace = cspace_constructor.construct(manipulator, HW4::getEx3Workspace1());
+    // Part a)
+    std::unique_ptr<amp::GridCSpace2D> cspacea = cspace_constructor.construct(manip, HW4::getEx3Workspace1());
+    Visualizer::makeFigure(HW4::getEx3Workspace1(), manip, state);
+    Visualizer::makeFigure(*cspacea);
 
-    // You can visualize your cspace
-    //Visualizer::makeFigure(*cspace);
+    //HW4::checkCSpace(cspacea, manip, HW4::getEx3Workspace1());
+
+
+    // Part b)
+    std::unique_ptr<amp::GridCSpace2D> cspaceb = cspace_constructor.construct(manip, HW4::getEx3Workspace2());
+    Visualizer::makeFigure(HW4::getEx3Workspace2(), manip, state);
+    Visualizer::makeFigure(*cspaceb);
+
+    // Part c)
+    std::unique_ptr<amp::GridCSpace2D> cspacec = cspace_constructor.construct(manip, HW4::getEx3Workspace3());
+    Visualizer::makeFigure(HW4::getEx3Workspace3(), manip, state);
+    Visualizer::makeFigure(*cspacec);
+
 //
     Visualizer::saveFigures(true, "hw4_figs");
 
