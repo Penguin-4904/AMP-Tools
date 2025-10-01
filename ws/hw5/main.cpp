@@ -18,13 +18,14 @@ int main(int argc, char** argv) {
     Path2D path;
     Problem2D prob;
     bool success = HW5::generateAndCheck(algo, path, prob);
+
     Visualizer::makeFigure(prob, path);
 
     // Visualize your potential function
-    Visualizer::makeFigure(MyPotentialFunction{}, prob, 30);
-    Visualizer::saveFigures(true, "hw5_figs");
+    Visualizer::makeFigure(MyPotentialFunction{1.0, 1.0, 1.0, 1.0, prob}, prob, 30);
+    // Visualizer::saveFigures(true, "hw5_figs");
     
     // Arguments following argv correspond to the constructor arguments of MyGDAlgorithm:
-    HW5::grade<MyGDAlgorithm>("nonhuman.biologic@myspace.edu", argc, argv, 1.0, 1.0, 1.0, 1.0);
+    // HW5::grade<MyGDAlgorithm>("Katrina.Braun@colorado.edu", argc, argv, 1.0, 1.0, 1.0, 1.0);
     return 0;
 }
