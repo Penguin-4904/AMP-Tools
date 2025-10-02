@@ -9,7 +9,7 @@
 class MyGDAlgorithm : public amp::GDAlgorithm {
 	public:
 		// Consider defining a class constructor to easily tune parameters, for example: 
-		MyGDAlgorithm(double d_star, double zetta, double Q_star, double eta, double alpha = 1.0, double eps = 0.25) :
+		MyGDAlgorithm(double d_star, double zetta, double Q_star, double eta, double alpha = 0.1, double eps = 0.25) :
 			d_star(d_star),
 			zetta(zetta),
 			Q_star(Q_star),
@@ -37,6 +37,8 @@ class MyPotentialFunction : public amp::PotentialFunction2D {
         virtual double operator()(const Eigen::Vector2d& q) const override;
 
 		virtual Eigen::Vector2d getGradient(const Eigen::Vector2d& q) const override;
+
+        Eigen::Vector2d getGradient(const Eigen::Vector2d& q, double& dist);
 
         Eigen::Vector2d closestPoint(const Eigen::Vector2d& q, const amp::Obstacle2D& obstacle) const;
 
