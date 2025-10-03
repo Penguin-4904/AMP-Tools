@@ -12,7 +12,7 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
     size_t i = 0;
     size_t last_i = 0;
     size_t count = 0;
-    size_t max_iterations = 200;
+    size_t max_iterations = 2000;
     int dir = -1;
     double last_dist = (q - problem.q_goal).norm();
     double best_dist = last_dist;
@@ -33,32 +33,15 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
 
         q += step;
         if (last_dist - (q - problem.q_goal).norm() < step.norm()/10){
-            q -= step;
-            step += alpha * d_star * zetta * (q - problem.q_goal) / (q - problem.q_goal).norm();
-            step.normalize();
-            if ((i - last_i) > 4){
-                dir *= -1;
-                count += 1;
-                LOG("Count: " << count);
-                if (count > 2){
-                    count = 0;
-                    dir *= -1;
-                    size_t j = i;
-                    while (((q - problem.q_goal).norm() > best_dist) & (i - j < max_iterations)){
-                        i++;
-                        step = - potential_func.getGradient(q, object_dist) + d_star * zetta * (q - problem.q_goal) / (q - problem.q_goal).norm();
-                        q[0] -= (dir * step[1] * object_dist);
-                        q[1] += (dir * step[0] * object_dist);
-                        path.waypoints.push_back(q);
-                    }
-
-                    step = potential_func.getGradient(q, object_dist);
-                }
+            while (((q - problem.q_goal).norm() > best_dist) & (i < max_iterations)){
+                i++;
+                step = - potential_func.getGradient(q, object_dist) + d_star * zetta * (q - problem.q_goal) / (q - problem.q_goal).norm();
+                q[0] -= (dir * step[1] * object_dist);
+                q[1] += (dir * step[0] * object_dist);
+                path.waypoints.push_back(q);
             }
-            q[0] -= (dir * step[1] * object_dist/2);
-            q[1] += (dir * step[0] * object_dist/2);
-            last_i = i;
-//            LOG("Break");
+        } else {
+            path.waypoints.push_back(q);
         }
 
         last_dist = (q - problem.q_goal).norm();
@@ -68,7 +51,7 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
             count = 0;
         }
 
-        path.waypoints.push_back(q);
+
 //        LOG((q - problem.q_goal).norm());
 //        LOG(step.norm());
     }
