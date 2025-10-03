@@ -16,8 +16,8 @@ int main(int argc, char** argv) {
 
     double d_star = 1;
     double zetta = 5;
-    double Q_star = 5;
-    double eta = 0.1;
+    double Q_star = 1;
+    double eta = 0.01;
 
     MyGDAlgorithm algo(d_star, zetta, Q_star, eta);
     Problem2D prob1 = HW5::getWorkspace1();
