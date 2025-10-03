@@ -11,64 +11,62 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
 
     size_t i = 0;
     size_t last_i = 0;
-    int dir = 1;
+    size_t count = 0;
+    size_t max_iterations = 200;
+    int dir = -1;
     double last_dist = (q - problem.q_goal).norm();
-    while (((q - problem.q_goal).norm() >= eps) & (i < 1000)) {
+    double best_dist = last_dist;
+    Eigen::Vector2d closest_point = q;
+
+    while (((q - problem.q_goal).norm() >= eps) & (i < max_iterations)) {
 
         i++;
 //        LOG(i);
-        double closest_dist = (q - problem.q_goal).norm();
-//        double obstacle_dist;
-//
-//        for (int j = 0; j < num_obstacles; j++){
-//            obstacle_dist = (q - potential_func.closestPoint(q, problem.obstacles[j])).norm();
-//            if (obstacle_dist < closest_dist){
-//                closest_dist = obstacle_dist;
-//            }
-//        }
+        double object_dist = (q - problem.q_goal).norm();
 
-        Eigen::Vector2d step = - alpha * potential_func.getGradient(q, closest_dist);
+        Eigen::Vector2d step = - alpha * potential_func.getGradient(q, object_dist);
 
-        if ((step.norm() > closest_dist)){
+        if ((object_dist < Q_star) & (step.norm() > object_dist)){
             step.normalize();
-            step *= closest_dist;
+            step *= object_dist;
         }
-//        if (closest_dist < Q_star) {
-//            step.normalize();
-//            step *= alpha * (d_star * zetta);
-//        }
 
         q += step;
         if (last_dist - (q - problem.q_goal).norm() < step.norm()/10){
             q -= step;
+            step += alpha * d_star * zetta * (q - problem.q_goal) / (q - problem.q_goal).norm();
             step.normalize();
-            if ((i - last_i) > 5){
+            if ((i - last_i) > 4){
                 dir *= -1;
+                count += 1;
+                LOG("Count: " << count);
+                if (count > 2){
+                    count = 0;
+                    dir *= -1;
+                    size_t j = i;
+                    while (((q - problem.q_goal).norm() > best_dist) & (i - j < max_iterations)){
+                        i++;
+                        step = - potential_func.getGradient(q, object_dist) + d_star * zetta * (q - problem.q_goal) / (q - problem.q_goal).norm();
+                        q[0] -= (dir * step[1] * object_dist);
+                        q[1] += (dir * step[0] * object_dist);
+                        path.waypoints.push_back(q);
+                    }
+
+                    step = potential_func.getGradient(q, object_dist);
+                }
             }
-            q[0] -= (dir * step[1] * closest_dist);
-            q[1] += (dir * step[0] * closest_dist);
+            q[0] -= (dir * step[1] * object_dist/2);
+            q[1] += (dir * step[0] * object_dist/2);
             last_i = i;
 //            LOG("Break");
         }
 
         last_dist = (q - problem.q_goal).norm();
-//        LOG("Dist: " << closest_dist);
-//        LOG("q: " << q);
-//        LOG("Step: " << step);
-//        for (int j = 0; j < path.waypoints.size(); j++){
-//            if ((q - (path.waypoints.rbegin()[j])).norm() < 0.1){
-//                q -= step;
-//                step.normalize();
-//                if ((i - last_i) > 5){
-//                    dir *= -1;
-//                }
-//                q[0] -= (dir * step[1] * closest_dist);
-//                q[1] += (dir * step[0] * closest_dist);
-//                last_i = i;
-//                LOG("Break");
-//                break;
-//            }
-//        }
+        if (last_dist < best_dist){
+            best_dist = last_dist;
+            closest_point = q;
+            count = 0;
+        }
 
         path.waypoints.push_back(q);
 //        LOG((q - problem.q_goal).norm());
