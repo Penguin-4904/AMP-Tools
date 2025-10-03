@@ -14,9 +14,9 @@ int main(int argc, char** argv) {
     /* Include this line to have different randomized environments every time you run your code (NOTE: this has no affect on grade()) */
     amp::RNG::seed(amp::RNG::randiUnbounded());
 
-    double d_star = 1;
+    double d_star = 2;
     double zetta = 5;
-    double Q_star = 1;
+    double Q_star = 5;
     double eta = 0.01;
 
     MyGDAlgorithm algo(d_star, zetta, Q_star, eta);

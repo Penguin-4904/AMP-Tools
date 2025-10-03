@@ -17,50 +17,61 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
     Eigen::Vector2d gradient;
     std::vector<Eigen::Vector2d> past_extrema;
 
-    while (((q - problem.q_goal).norm() >= eps) & (i < 10000)) {
+    while (((q - problem.q_goal).norm() >= eps) & (i < 20000)) {
 
         i++;
         double closest_dist = (q - problem.q_goal).norm();
 
         Eigen::Vector2d gradient = potential_func.getGradient(q, closest_dist);
 
-        if (past_extrema.size() >= 1){
-            for (int i = 0; i < past_extrema.size() - 1; i++){
-                Eigen::Vector2d to_extrema = q - past_extrema[i];
-                double dist = to_extrema.norm();
-
-                if (dist < Q_star){
-                    gradient -= eta * (1 / dist - 1 / Q_star) * (to_extrema) / (dist * dist * dist);
-                }
-            }
-        }
-
-//        if (gradient.dot(q - problem.q_goal) < 0) {
-//            past_extrema.push_back(q);
+//        if (past_extrema.size() >= 1){
+//            for (int i = 0; i < past_extrema.size() - 1; i++){
+//                Eigen::Vector2d to_extrema = q - past_extrema[i];
+//                double dist = to_extrema.norm();
 //
-//            if (path.waypoints.size() > 2){
-//                Eigen::Vector2d rand_vector(amp::RNG::randd(), amp::RNG::randd());
-//                rand_vector.normalize();
-//                path.waypoints.pop_back();
-//                q = path.waypoints[path.waypoints.size() - 1];
-//                potential_func.getGradient(q, closest_dist);
-//                q += rand_vector * closest_dist * amp::RNG::randd();
+//                if (dist < Q_star){
+//                    gradient -= eta * (1 / dist - 1 / Q_star) * (to_extrema) / (dist * dist * dist);
+//                }
 //            }
-//            // step in random direction if happen to be inline with goal and all extrema.
-//            gradient = potential_func.getGradient(q, closest_dist);
-//            LOG("Extremum added");
 //        }
+//
+//        Eigen::Vector2d last_step = (q - path.waypoints[path.waypoints.size() - 2]).normalized();
+//        Eigen::Vector2d to_goal = (problem.q_goal - q).normalized();
+//
+        if (gradient.dot(to_goal) > gradient.norm()/10) {
+            past_extrema.push_back(q);
 
-        if (past_extrema.size() >= 1){
-            for (int i = 0; i < past_extrema.size() - 1; i++){
-                Eigen::Vector2d to_extrema = q - past_extrema[i];
-                double dist = to_extrema.norm();
+            path.waypoints.pop_back();
+            q = path.waypoints[path.waypoints.size() - 1];
 
-                if (dist < Q_star){
-                    gradient -= eta * (1 / dist - 1 / Q_star) * (to_extrema) / (dist * dist * dist);
-                }
+            while
+            if (path.waypoints.size() > 2){
+                Eigen::Vector2d rand_vector(amp::RNG::randd(), amp::RNG::randd());
+                rand_vector.normalize();
+
+                potential_func.getGradient(q, closest_dist);
+                dir *= -1;
+                q[0] += dir * to_goal[1] * closest_dist;
+                q[1] += - dir * to_goal[0] * closest_dist;
+                path.waypoints.push_back(q);
+                i++;
             }
+            // step in random direction if happen to be inline with goal and all extrema.
+
+            LOG("Extremum added");
         }
+//
+//        gradient = potential_func.getGradient(q, closest_dist);
+//        if (past_extrema.size() >= 1){
+//            for (int i = 0; i < past_extrema.size() - 1; i++){
+//                Eigen::Vector2d to_extrema = q - past_extrema[i];
+//                double dist = to_extrema.norm();
+//
+//                if (dist < Q_star){
+//                    gradient -= eta * (1 / dist - 1 / Q_star) * (to_extrema) / (dist * dist * dist);
+//                }
+//            }
+//        }
 
 
         Eigen::Vector2d step = - alpha * gradient;
@@ -154,6 +165,7 @@ double MyPotentialFunction::operator()(const Eigen::Vector2d& q) const {
 
     double u_rep = 0;
     Eigen::Vector2d c;
+    Eigen::Vector2d centroid;
     double obstacle_dist;
     for (int i = 0; i < num_obstacles; i++){
         c = closestPoint(q, problem.obstacles[i], c);
@@ -183,12 +195,17 @@ Eigen::Vector2d MyPotentialFunction::getGradient(const Eigen::Vector2d &q) const
     Eigen::Vector2d c;
     Eigen::Vector2d centroid;
     double obstacle_dist;
+    double centroid_dist;
     for (int i = 0; i < num_obstacles; i++){
         c = closestPoint(q, problem.obstacles[i], centroid);
         obstacle_dist = (q - c).norm();
         if (obstacle_dist < Q_star){
-            del_u_rep -= eta * (1 / obstacle_dist - 1 / Q_star) * (q - centroid) / ((q - centroid).norm() * obstacle_dist * obstacle_dist);
-        } // Double check direction of gradient.
+            del_u_rep -= eta * (1 / obstacle_dist - 1 / Q_star) * (q - c) / (obstacle_dist * obstacle_dist * obstacle_dist);
+        }
+//        centroid_dist = (q - centroid).norm();
+//        if (centroid_dist < Q_star){
+//            del_u_rep -= eta * (1 / centroid_dist - 1 / Q_star) * (q - centroid) / (centroid_dist * centroid_dist * centroid_dist);
+//        }
     }
 
     return del_u_att + del_u_rep;
@@ -211,6 +228,7 @@ Eigen::Vector2d MyPotentialFunction::getGradient(const Eigen::Vector2d& q, doubl
     Eigen::Vector2d c;
     Eigen::Vector2d centroid;
     double obstacle_dist;
+    double centroid_dist;
     for (int i = 0; i < num_obstacles; i++){
         c = closestPoint(q, problem.obstacles[i], centroid);
         obstacle_dist = (q - c).norm();
@@ -220,8 +238,12 @@ Eigen::Vector2d MyPotentialFunction::getGradient(const Eigen::Vector2d& q, doubl
         }
 
         if (obstacle_dist < Q_star){
-            del_u_rep -= eta * (1 / obstacle_dist - 1 / Q_star) * (q - centroid) / ((q - centroid).norm() * obstacle_dist * obstacle_dist);
-        } // Double check direction of gradient.
+            del_u_rep -= eta * (1 / obstacle_dist - 1 / Q_star) * (q - c) / (obstacle_dist * obstacle_dist * obstacle_dist);
+        }
+//        centroid_dist = (q - centroid).norm();
+//        if (centroid_dist < Q_star * 2){
+//            del_u_rep -= eta * (1 / centroid_dist - 1 / (Q_star * 2)) * (q - centroid) / (centroid_dist * centroid_dist * centroid_dist);
+//        }
     }
 
     return del_u_att + del_u_rep;
