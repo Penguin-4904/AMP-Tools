@@ -1,6 +1,6 @@
 #include "MyGDAlgorithm.h"
 
-// Implement your plan method here, similar to HW2:
+/// @brief plans a path through the enviorment using gradient descent.
 amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
     amp::Path2D path;
     path.waypoints.push_back(problem.q_init);
@@ -11,55 +11,47 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
 
     size_t i = 0;
     size_t last_i = 0;
-    size_t count = 0;
-    size_t max_iterations = 2000;
-    int dir = -1;
+    int dir = 1;
     double last_dist = (q - problem.q_goal).norm();
-    double best_dist = last_dist;
-    Eigen::Vector2d closest_point = q;
 
-    while (((q - problem.q_goal).norm() >= eps) & (i < max_iterations)) {
+    while (((q - problem.q_goal).norm() >= eps) & (i < 1000)) {
 
         i++;
-//        LOG(i);
-        double object_dist = (q - problem.q_goal).norm();
+        double closest_dist = (q - problem.q_goal).norm();
 
-        Eigen::Vector2d step = - alpha * potential_func.getGradient(q, object_dist);
+        Eigen::Vector2d step = - alpha * potential_func.getGradient(q, closest_dist);
 
-        if ((object_dist < Q_star) & (step.norm() > object_dist)){
+        if ((step.norm() > closest_dist)){
             step.normalize();
-            step *= object_dist;
+            step *= closest_dist;
         }
 
         q += step;
+
+
+        // if not progressing towards goal sufficiently quickly follow edge? For some reason this works really well.
+        
         if (last_dist - (q - problem.q_goal).norm() < step.norm()/10){
-            while (((q - problem.q_goal).norm() > best_dist) & (i < max_iterations)){
-                i++;
-                step = - potential_func.getGradient(q, object_dist) + d_star * zetta * (q - problem.q_goal) / (q - problem.q_goal).norm();
-                q[0] -= (dir * step[1] * object_dist);
-                q[1] += (dir * step[0] * object_dist);
-                path.waypoints.push_back(q);
+            q -= step;
+            step.normalize();
+            if ((i - last_i) > 5){
+                dir *= -1;
             }
-        } else {
-            path.waypoints.push_back(q);
+            q[0] -= (dir * step[1] * closest_dist);
+            q[1] += (dir * step[0] * closest_dist);
+            last_i = i;
         }
 
         last_dist = (q - problem.q_goal).norm();
-        if (last_dist < best_dist){
-            best_dist = last_dist;
-            closest_point = q;
-            count = 0;
-        }
 
-
-//        LOG((q - problem.q_goal).norm());
-//        LOG(step.norm());
+        path.waypoints.push_back(q);
     }
 
     path.waypoints.push_back(problem.q_goal);
     return path;
 }
 
+/// @brief find the closes point on the obstacle to the given point
 Eigen::Vector2d MyPotentialFunction::closestPoint(const Eigen::Vector2d& point, const amp::Obstacle2D& obstacle) const{
     const std::vector<Eigen::Vector2d>& vertices = obstacle.verticesCCW();
     size_t num_vertices = vertices.size();
@@ -113,6 +105,7 @@ Eigen::Vector2d MyPotentialFunction::closestPoint(const Eigen::Vector2d& point, 
     return best_point;
 }
 
+/// @brief evaluate the potential function at the given point
 double MyPotentialFunction::operator()(const Eigen::Vector2d& q) const {
 
     size_t num_obstacles = problem.obstacles.size();
@@ -139,6 +132,7 @@ double MyPotentialFunction::operator()(const Eigen::Vector2d& q) const {
     return u_att + u_rep;
 }
 
+/// @brief get the gradient of the potential function at a given point.
 Eigen::Vector2d MyPotentialFunction::getGradient(const Eigen::Vector2d &q) const {
     size_t num_obstacles = problem.obstacles.size();
     Eigen::Vector2d del_u_att;
@@ -165,6 +159,7 @@ Eigen::Vector2d MyPotentialFunction::getGradient(const Eigen::Vector2d &q) const
     return del_u_att + del_u_rep;
 }
 
+/// @breif get the gradient of the potential function at a given point and set the distance reference to the distance to the closest obstacle to that point.
 Eigen::Vector2d MyPotentialFunction::getGradient(const Eigen::Vector2d& q, double& dist){
     size_t num_obstacles = problem.obstacles.size();
     Eigen::Vector2d del_u_att;
