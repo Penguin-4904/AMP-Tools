@@ -51,7 +51,7 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
     return path;
 }
 
-/// @brief find the closes point on the obstacel to the given point
+/// @brief find the closes point on the obstacle to the given point
 Eigen::Vector2d MyPotentialFunction::closestPoint(const Eigen::Vector2d& point, const amp::Obstacle2D& obstacle) const{
     const std::vector<Eigen::Vector2d>& vertices = obstacle.verticesCCW();
     size_t num_vertices = vertices.size();
