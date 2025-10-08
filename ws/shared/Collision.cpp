@@ -96,3 +96,4 @@ bool collide_chain_object(const std::vector<Eigen::Vector2d>& joints, const amp:
     return false;
     // return collide_object(joints[0], obstacle);
 }
+
