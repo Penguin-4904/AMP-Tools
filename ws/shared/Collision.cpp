@@ -73,8 +73,10 @@ bool collide_chain_object(const std::vector<Eigen::Vector2d>& joints, const amp:
             Eigen::Vector2d vec3 = (vertices[i] - joints[numJoints - j - 2]).normalized();
             Eigen::Vector2d vec4 = vertices[i + 1] - joints[numJoints - j - 2];
 
-            if ((std::signbit(vec1(0) * vec2(1) - vec1(1) * vec2(0)) != std::signbit(vec3(0) * vec4(1) - vec3(1) * vec4(0))) &
-                (std::signbit(vec1(0) * vec3(1) - vec1(1) * vec3(0)) != std::signbit(vec2(0) * vec4(1) - vec2(1) * vec4(0)))){
+            if ((std::signbit(vec1(0) * vec2(1) - vec1(1) * vec2(0)) != std::signbit(vec3(0) * vec4(1) - vec3(1) * vec4(0))) &&
+                (std::signbit(vec1(0) * vec3(1) - vec1(1) * vec3(0)) != std::signbit(vec2(0) * vec4(1) - vec2(1) * vec4(0))) &&
+                (vec1(0) * vec2(1) - vec1(1) * vec2(0) != 0) && (vec1(0) * vec3(1) - vec1(1) * vec3(0) != 0) &&
+                (vec3(0) * vec4(1) - vec3(1) * vec4(0) != 0) && (vec2(0) * vec4(1) - vec2(1) * vec4(0) != 0)){
                 return true;
             }
         }
@@ -87,8 +89,10 @@ bool collide_chain_object(const std::vector<Eigen::Vector2d>& joints, const amp:
         Eigen::Vector2d vec3 = (vertices[numVertices - 1] - joints[numJoints - j - 2]).normalized();
         Eigen::Vector2d vec4 = vertices[0] - joints[numJoints - j - 2];
 
-        if ((std::signbit(vec1(0) * vec2(1) - vec1(1) * vec2(0)) != std::signbit(vec3(0) * vec4(1) - vec3(1) * vec4(0))) &
-            (std::signbit(vec1(0) * vec3(1) - vec1(1) * vec3(0)) != std::signbit(vec2(0) * vec4(1) - vec2(1) * vec4(0)))){
+        if ((std::signbit(vec1(0) * vec2(1) - vec1(1) * vec2(0)) != std::signbit(vec3(0) * vec4(1) - vec3(1) * vec4(0))) &&
+            (std::signbit(vec1(0) * vec3(1) - vec1(1) * vec3(0)) != std::signbit(vec2(0) * vec4(1) - vec2(1) * vec4(0))) &&
+            (vec1(0) * vec2(1) - vec1(1) * vec2(0) != 0) && (vec1(0) * vec3(1) - vec1(1) * vec3(0) != 0) &&
+            (vec3(0) * vec4(1) - vec3(1) * vec4(0) != 0) && (vec2(0) * vec4(1) - vec2(1) * vec4(0) != 0)){
             return true;
         }
     }
@@ -97,3 +101,23 @@ bool collide_chain_object(const std::vector<Eigen::Vector2d>& joints, const amp:
     // return collide_object(joints[0], obstacle);
 }
 
+bool check_cell_collisions(const Eigen::Vector2d center, const double width, const double height, const std::vector<amp::Obstacle2D>& obstacles){
+
+    if (check_collisions(center, obstacles)){
+        return true;
+    }
+
+    std::vector<Eigen::Vector2d> chain = {center + Eigen::Vector2d(-width/2, -height/2),
+                                          center + Eigen::Vector2d(width/2, -height/2),
+                                          center + Eigen::Vector2d(width/2, height/2),
+                                          center + Eigen::Vector2d(-width/2, height/2),
+                                          center + Eigen::Vector2d(-width/2, -height/2)
+                                          };
+
+    for (int i = 0; i < obstacles.size(); i++){
+        if (collide_chain_object(chain, obstacles[i])){ // Check if joint chain collides with current object
+            return true;
+        }
+    }
+    return false;
+}

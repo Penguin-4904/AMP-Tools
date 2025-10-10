@@ -18,3 +18,6 @@ bool check_manipulator_collisions(const amp::LinkManipulator2D& manipulator, con
 
 /// @brief checks if the chain of joints/points collides with obstacle
 bool collide_chain_object(const std::vector<Eigen::Vector2d>& joints, const amp::Obstacle2D& obstacle);
+
+/// @breief checks if any part of the cell collides with any of the obstacles.
+bool check_cell_collisions(const Eigen::Vector2d center, const double width, const double height, const std::vector<amp::Obstacle2D>& obstacles);

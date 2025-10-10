@@ -9,15 +9,16 @@ std::unique_ptr<amp::GridCSpace2D> MyPointAgentCSConstructor::construct(const am
     std::unique_ptr<MyGridCSpace2D> cspace_ptr = std::make_unique<MyGridCSpace2D>(m_cells_per_dim, m_cells_per_dim, env.x_min, env.x_max, env.y_min, env.y_max);
     // In order to use the pointer as a regular GridCSpace2D object, we can just create a reference
     MyGridCSpace2D& cspace = *cspace_ptr;
-
-    Eigen::Vector2d state = {env.x_min + (env.x_max - env.x_min)/(2 * m_cells_per_dim), env.y_min + (env.y_max - env.y_min)/(2 * m_cells_per_dim)};
+    double x_res = (env.x_max - env.x_min)/m_cells_per_dim;
+    double y_res = (env.y_max - env.y_min)/m_cells_per_dim;
+    Eigen::Vector2d state = {env.x_min + x_res/2, env.y_min + y_res/2};
     for (int i = 0; i < m_cells_per_dim; i++){
         for (int j = 0; j < m_cells_per_dim; j++){
-            cspace(j, i) = check_collisions(state, env.obstacles);
-            state[0] += (env.x_max - env.x_min)/m_cells_per_dim;
+            cspace(j, i) = check_cell_collisions(state, x_res, y_res, env.obstacles) ;
+            state[0] += x_res;
         }
-        state[0] = env.x_min + (env.x_max - env.x_min)/(2 * m_cells_per_dim);
-        state[1] += (env.y_max - env.y_min)/m_cells_per_dim;
+        state[0] = env.x_min + x_res/2;
+        state[1] += y_res;
     }
 
     // Returning the object of type std::unique_ptr<MyGridCSpace2D> can automatically cast it to a polymorphic base-class pointer of type std::unique_ptr<amp::GridCSpace2D>.
@@ -30,13 +31,27 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
     double x_step = (grid_cspace.x0Bounds().second - grid_cspace.x0Bounds().first)/grid_cspace.size().first;
     double y_step = (grid_cspace.x1Bounds().second - grid_cspace.x1Bounds().first)/grid_cspace.size().second;
 
-    // Implement your WaveFront algorithm here
-    amp::Path2D path;
-    path.waypoints.push_back(q_init);
-
     Eigen::MatrixXi wave_grid = Eigen::MatrixXi::Zero(grid_cspace.size().first, grid_cspace.size().second);
-    std::pair<std::size_t, std::size_t> q_goal_index = grid_cspace.getCellFromPoint(q_goal[0], q_goal[1]);
-    std::pair<std::size_t, std::size_t> q_init_index = grid_cspace.getCellFromPoint(q_init[0], q_init[1]);
+
+    Eigen::Vector2d q_goal_local = q_goal;
+
+    if (isManipulator) {
+        q_goal_local[0] = fmod(q_goal_local[0] + 2 * M_PI, 2 * M_PI);
+        q_goal_local[1] = fmod(q_goal_local[1] + 2 * M_PI, 2 * M_PI);
+    }
+
+    Eigen::Vector2d q_init_local = q_init;
+
+    if (isManipulator) {
+        q_init_local[0] = fmod(q_init_local[0] + 2 * M_PI, 2 * M_PI);
+        q_init_local[1] = fmod(q_init_local[1] + 2 * M_PI, 2 * M_PI);
+    }
+
+    amp::Path2D path;
+    path.waypoints.push_back(q_init_local);
+
+    std::pair<std::size_t, std::size_t> q_goal_index = grid_cspace.getCellFromPoint(q_goal_local[0], q_goal_local[1]);
+    std::pair<std::size_t, std::size_t> q_init_index = grid_cspace.getCellFromPoint(q_init_local[0], q_init_local[1]);
 
     std::vector<std::pair<std::size_t, std::size_t>> next_cells;
     std::vector<std::pair<std::size_t, std::size_t>> current_cells;
@@ -44,6 +59,7 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
     current_cells.push_back(q_goal_index);
 
     int i = 2;
+
     wave_grid(q_goal_index.first, q_goal_index.second) = 1;
 
     while (true) {
@@ -82,22 +98,22 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
                     y_plus = 0;
                 }
             }
-
+            //LOG("x_plus " << x_plus);
             if ((x_plus < grid_cspace.size().first) && (wave_grid(x_plus, y) == 0) && !grid_cspace(x_plus, y)){
                 wave_grid(x_plus, y) = i;
                 next_cells.push_back({x_plus, y});
             }
-
+            //LOG("y_plus " << y_plus);
             if ((y_plus < grid_cspace.size().second) && (wave_grid(x, y_plus) == 0) && !grid_cspace(x, y_plus)){
                 wave_grid(x, y_plus) = i;
                 next_cells.push_back({x, y_plus});
             }
-
+            //LOG("x_minus " << x_minus);
             if ((x_minus >= 0) && (wave_grid(x_minus, y) == 0) && !grid_cspace(x_minus, y)){
                 wave_grid(x_minus, y) = i;
                 next_cells.push_back({x_minus, y});
             }
-
+            //LOG("y_minus " << y_minus);
             if ((y_minus >= 0) && (wave_grid(x, y_minus) == 0) && !grid_cspace(x, y_minus)){
                 wave_grid(x, y_minus) = i;
                 next_cells.push_back({x, y_minus});
@@ -106,7 +122,7 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
 
         current_cells = next_cells;
         next_cells.clear(); // there is probably a more effcient way to do this with jsut one vector but it is faster for me to implement this.
-        LOG(i);
+        //LOG(i);
         i++;
     }
 
@@ -141,7 +157,7 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
             }
         }
 
-        LOG(i);
+        //LOG(i);
 
         if ((x_plus < grid_cspace.size().first) && (wave_grid(x_plus, y) < i) && (wave_grid(x_plus, y) > 0)){
             i = wave_grid(x_plus, y);
@@ -169,7 +185,7 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
     };
 
 
-    path.waypoints.push_back(q_goal);
+    path.waypoints.push_back(q_goal_local);
     if (isManipulator) {
         Eigen::Vector2d bounds0 = Eigen::Vector2d(0.0, 0.0);
         Eigen::Vector2d bounds1 = Eigen::Vector2d(2*M_PI, 2*M_PI);
