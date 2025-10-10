@@ -8,5 +8,6 @@
 
 class MyAStarAlgo : public amp::AStar {
     public:
+        /// @breif A-Star implementation returns shortest path given a shortest path problem and a heuristic.
         virtual GraphSearchResult search(const amp::ShortestPathProblem& problem, const amp::SearchHeuristic& heuristic) override;
 };

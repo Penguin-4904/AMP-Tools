@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
     /* Include this line to have different randomized environments every time you run your code (NOTE: this has no affect on grade()) */
     amp::RNG::seed(amp::RNG::randiUnbounded());
 
-    // You will need your 2-link manipulator from HW4
+    // Pull in all required environments.
     Manipulator2D manipulator;
     Problem2D point_problem_1 = HW2::getWorkspace1();
     Problem2D point_problem_2 = HW2::getWorkspace2();
@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     PointWaveFrontAlgorithm point_algo_2(wf_algo, point_agent_ctor_2);
     ManipulatorWaveFrontAlgorithm manip_algo(wf_algo, manipulator_ctor);
 
-    // Return a path for the point-agent and manipulator using c-space planning.
+    // Exercise 1:
     Path2D path_1 = point_algo_1.plan(point_problem_1);
     LOG("Homework 2 Exercise 2 Path Length 1: " << path_1.length());
     Visualizer::makeFigure(point_problem_1, path_1); // Visualize path in workspace
@@ -45,6 +45,7 @@ int main(int argc, char** argv) {
     Visualizer::makeFigure(point_problem_2, path_2); // Visualize path in workspace
     Visualizer::makeFigure(*point_algo_2.getCSpace(), path_2); // Visualize path in cspace
 
+    // Exercise 2:
     ManipulatorTrajectory2Link trajectory_1 = manip_algo.plan(manipulator, manip_problem_1);
     Visualizer::makeFigure(manip_problem_1, manipulator, trajectory_1);
     Visualizer::makeFigure(*manip_algo.getCSpace(), trajectory_1);
@@ -57,15 +58,15 @@ int main(int argc, char** argv) {
     Visualizer::makeFigure(manip_problem_3, manipulator, trajectory_3);
     Visualizer::makeFigure(*manip_algo.getCSpace(), trajectory_3);
 
-//    // For Exercise 3, you will need to implement the A* algorithm.
+    // Exercise 3:
     ShortestPathProblem problem = HW6::getEx3SPP();
     LookupSearchHeuristic heuristic = HW6::getEx3Heuristic();
     MyAStarAlgo algo;
     MyAStarAlgo::GraphSearchResult result1 = algo.search(problem, heuristic);
     MyAStarAlgo::GraphSearchResult result2 = algo.search(problem, SearchHeuristic());
-//
+
     Visualizer::saveFigures(true, "hw6_figs");
-//
+
     manipulator_ctor = std::make_shared<MyManipulatorCSConstructor>(100);
     amp::HW6::grade<PointWaveFrontAlgorithm, ManipulatorWaveFrontAlgorithm, MyAStarAlgo>("Katrina.Braun@colorado.edu", argc, argv, std::make_tuple(wf_algo, point_agent_ctor_1), std::make_tuple(wf_algo, manipulator_ctor), std::make_tuple());
     return 0;

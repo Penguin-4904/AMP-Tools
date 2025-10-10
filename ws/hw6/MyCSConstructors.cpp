@@ -2,7 +2,7 @@
 
 
 
-// Override this method for computing all of the boolean collision values for each cell in the cspace
+/// @breif Constructs CSpace for point agent by detecting if any part of the cell collides with an obstacle.
 std::unique_ptr<amp::GridCSpace2D> MyPointAgentCSConstructor::construct(const amp::Environment2D& env) {
     // Create an object of my custom cspace type (e.g. MyGridCSpace2D) and store it in a unique pointer. 
     // Pass the constructor parameters to std::make_unique()
@@ -26,6 +26,7 @@ std::unique_ptr<amp::GridCSpace2D> MyPointAgentCSConstructor::construct(const am
     return cspace_ptr;
 }
 
+/// @brief runs a wavefront algorithm over the provided CSpace with the same grid size as the CSpace
 amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, const Eigen::Vector2d& q_goal, const amp::GridCSpace2D& grid_cspace, bool isManipulator) {
 
     double x_step = (grid_cspace.x0Bounds().second - grid_cspace.x0Bounds().first)/grid_cspace.size().first;

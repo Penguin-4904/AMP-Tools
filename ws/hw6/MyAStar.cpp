@@ -1,6 +1,6 @@
 #include "MyAStar.h"
 
-// Implement the search method for the A* algorithm
+/// @breif A-Star implementation returns shortest path given a shortest path problem and a heuristic.
 MyAStarAlgo::GraphSearchResult MyAStarAlgo::search(const amp::ShortestPathProblem& problem, const amp::SearchHeuristic& heuristic) {
     std::cout << "Starting A* Graph Search: Init --> goal | " << problem.init_node << " --> " << problem.goal_node << std::endl;
     std::vector<GraphSearchResult> open_list;
