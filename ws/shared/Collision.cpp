@@ -59,6 +59,18 @@ bool check_manipulator_collisions(const amp::LinkManipulator2D& manipulator, con
     return false;
 }
 
+/// @brief checks if the chain of joints/points collides with any of the obstacles
+bool check_chain_collisions(const std::vector<Eigen::Vector2d>& points, const std::vector<amp::Obstacle2D>& obstacles){
+    size_t numObstacles = obstacles.size();
+
+    for (int i = 0; i < numObstacles; i++){
+        if (collide_chain_object(points, obstacles[i])){ // Check if joint chain collides with current object
+            return true;
+        }
+    }
+    return false;
+}
+
 /// @brief checks if the chain of joints/points collides with obstacle
 bool collide_chain_object(const std::vector<Eigen::Vector2d>& joints, const amp::Obstacle2D& obstacle){
     std::vector<Eigen::Vector2d> vertices = obstacle.verticesCCW();

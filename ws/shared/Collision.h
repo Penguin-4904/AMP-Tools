@@ -21,3 +21,6 @@ bool collide_chain_object(const std::vector<Eigen::Vector2d>& joints, const amp:
 
 /// @breif checks if any part of the cell collides with any obstacle given the center of the cell and the width and height and a vector of obstacles
 bool check_cell_collisions(const Eigen::Vector2d center, const double width, const double height, const std::vector<amp::Obstacle2D>& obstacles);
+
+/// @brief checks if the chain of joints/points collides with any of the obstacles
+bool check_chain_collisions(const std::vector<Eigen::Vector2d>& points, const std::vector<amp::Obstacle2D>& obstacles);
