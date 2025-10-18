@@ -1,14 +1,10 @@
 # include "MySamplingBasedPlanners.h"
 
-// Implement your PRM algorithm here
+/// @brief performs PRM on the given problem using the class member variables as parameters.
 amp::Path2D MyPRM::plan(const amp::Problem2D& problem) {
 
-    //LOG("Start");
     nodes.clear();
     graphPtr->clear();
-
-//    points.push_back(problem.q_init);
-//    points.push_back(problem.q_goal);
 
     std::pair<amp::Node, double> best_dist_init(0, (problem.q_init - problem.q_goal).norm());
     std::pair<amp::Node, double> best_dist_goal(0, best_dist_init.second);
@@ -46,15 +42,6 @@ amp::Path2D MyPRM::plan(const amp::Problem2D& problem) {
     graphPtr->connect(best_dist_init.first, n + 1, best_dist_init.second);
     nodes[n + 1] = problem.q_init;
 
-//    LOG("Point Size: " << points.size());
-//    LOG("Edges Size: " << edges.size());
-
-    // for (amp::Node i = 0; i < points.size(); ++i) nodes[i] = points[i];
-    // for (const auto& [from, to, weight] : edges) graphPtr->connect(from, to, weight);
-
-//    graphPtr->children(0);
-//    graphPtr->print();
-
     LookupSearchHeuristic dist_heuristic;
 
     for (const auto& [node, point] : nodes) dist_heuristic.heuristic_values[node] = (point - problem.q_goal).norm();
@@ -67,10 +54,7 @@ amp::Path2D MyPRM::plan(const amp::Problem2D& problem) {
     graph_problem.init_node = n + 1;
     graph_problem.goal_node = n;
 
-//    LOG("Heuristic " << dist_heuristic.heuristic_values.size());
     MyAStarAlgo::GraphSearchResult result = a_star.search(graph_problem, dist_heuristic);
-
-//    LOG("Result: " << result.success);
 
     amp::Path2D path;
 
@@ -95,13 +79,9 @@ amp::Path2D MyPRM::plan(const amp::Problem2D& problem) {
 }
 
 
-// Implement your RRT algorithm here
+/// @brief performs GoalBiasRRT on the given problem using the class member variables as parameters.
 amp::Path2D MyRRT::plan(const amp::Problem2D& problem) {
 
-//    LOG(problem.x_min);
-//    LOG(problem.x_max);
-//    LOG(problem.y_min);
-//    LOG(problem.y_max);
     nodes.clear();
     graphPtr->clear();
 
@@ -136,18 +116,6 @@ amp::Path2D MyRRT::plan(const amp::Problem2D& problem) {
         }
     }
 
-//    std::pair<size_t, double> best_dist = {0, (problem.q_goal - problem.q_init).norm()};
-//    for (const auto& [node, neighbor] : nodes){
-//        if ((problem.q_goal - neighbor).norm() < best_dist.second){
-//            best_dist.second = (problem.q_goal - neighbor).norm();
-//            best_dist.first = node;
-//        }
-//    }
-//
-//    graphPtr->connect(best_dist.first, n, best_dist.second);
-
-
-
     nodes[n] = problem.q_goal;
 
     amp::Path2D path;
@@ -161,22 +129,6 @@ amp::Path2D MyRRT::plan(const amp::Problem2D& problem) {
     }
 
     reverse(path.waypoints.begin(), path.waypoints.end());
-
-//    if (path_smoothing){
-//        size_t iterations = path.waypoints.size();
-//        for (size_t i = 0; i < iterations; i++){
-//            int j = amp::RNG::randi(0, path.waypoints.size());
-//            int k = amp::RNG::randi(0, path.waypoints.size());
-//            if ((abs(j - k) > 1) && !check_chain_collisions(std::vector<Eigen::Vector2d>{path.waypoints[i], path.waypoints[k]}, problem.obstacles)){
-//                for (size_t l = 1; l < abs(j - k); l++){
-//                    path.waypoints.erase(path.waypoints.begin() + std::min(j, k) + 1);
-//                }
-//            }
-//        }
-//    }
-
-//    path.waypoints.push_back(problem.q_init);
-//    path.waypoints.push_back(problem.q_goal);
 
     return path;
 }

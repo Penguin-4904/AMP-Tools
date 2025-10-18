@@ -68,18 +68,12 @@ void benchmark_algo(MyPMP2D& algo, std::vector<Problem2D> problems, const std::v
 int main(int argc, char** argv) {
 //    HW7::hint(); // Consider implementing an N-dimensional planner
 
-//    // Example of creating a graph and adding nodes for visualization
-    std::shared_ptr<amp::Graph<double>> graphPtr = std::make_shared<amp::Graph<double>>();
-    std::map<amp::Node, Eigen::Vector2d> nodes;
-//
-//    std::vector<Eigen::Vector2d> points = {{3, 3}, {4, 5}, {5, 3}, {6, 5}, {5, 7}, {7, 3}}; // Points to add to the graph
-//    for (amp::Node i = 0; i < points.size(); ++i) nodes[i] = points[i]; // Add point-index pair to the map
-//    std::vector<std::tuple<amp::Node, amp::Node, double>> edges = {{0, 4, 1}, {0, 5, 1}, {4, 5, 1}, {1, 2, 1}, {1, 3, 1}, {2, 3, 1}}; // Edges to connect
-//    for (const auto& [from, to, weight] : edges) graphPtr->connect(from, to, weight); // Connect the edges in the graph
-//    graphPtr->print();
+    MyPRM prm;
+    Problem2D problem;
+    Path2D path;
 
     // Ex 1 (a)
-    Problem2D problem = HW5::getWorkspace1();
+    problem = HW5::getWorkspace1();
 
     problem.x_min = -1;
     problem.x_max = 11;
@@ -90,11 +84,10 @@ int main(int argc, char** argv) {
     std::vector<Problem2D> problems;
     problems.push_back(problem);
 
-    MyPRM prm;
     prm.set_n(200);
     prm.set_r(1);
 
-    Path2D path = prm.plan(problem);
+    path = prm.plan(problem);
     LOG("PRM Path Length Ex 1.(a): " << path.length());
     Visualizer::makeFigure(problem, path, *prm.get_graphPtr(), prm.get_nodes());
 
@@ -103,6 +96,7 @@ int main(int argc, char** argv) {
     prm.set_path_smoothing(true);
     benchmark_algo(prm, problem, benchmarks, "Ex 1.(a) (HW5 Ex 2.(a)) \\w smoothing");
 
+    // Ex 1.(b)
     problem = HW2::getWorkspace1();
     problems.push_back(problem);
 
@@ -146,12 +140,12 @@ int main(int argc, char** argv) {
     prm.set_path_smoothing(true);
     benchmark_algo(prm, problem, benchmarks, "Ex 1.(b) W2 (HW2 Ex 2) \\w smoothing");
 
+    // Ex 2.(a)
     MyRRT rrt;
     rrt.set_n(5000);
     rrt.set_r(0.5);
 
     path = rrt.plan(problems[0]);
-    HW7::check(path, problems[0]);
     LOG("RRT Path Length Ex 1.(a): " << path.length());
     Visualizer::makeFigure(problems[0], path, *rrt.get_graphPtr(), rrt.get_nodes());
 
@@ -163,6 +157,7 @@ int main(int argc, char** argv) {
     LOG("RRT Path Length Ex 1.(b) W2: " << path.length());
     Visualizer::makeFigure(problems[2], path, *rrt.get_graphPtr(), rrt.get_nodes());
 
+    // Ex 2.(b)
     benchmark_algo(rrt, problems, {"Ex 1.(a)", "Ex 1.(b) W1", "Ex 1.(b) W2"}, "Ex 2.(b) (RRT Benchmarks)");
 
     Visualizer::saveFigures(true, "hw7_figs");

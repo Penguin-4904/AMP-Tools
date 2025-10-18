@@ -8,6 +8,7 @@
 #include "Collision.h"
 #include "MyAStar.h"
 
+/// @brief virtual class for both MyPRM and MyRRT to pull from since they both have n, r, nodes, and graphPtr as variables
 class MyPMP2D : public amp::PointMotionPlanner2D {
     public:
         size_t get_n() {return n;};
@@ -36,11 +37,13 @@ class MyPMP2D : public amp::PointMotionPlanner2D {
 
 class MyPRM : public amp::PRM2D, public MyPMP2D {
     public:
+    /// @brief performs PRM on the given problem using the class member variables as parameters.
         virtual amp::Path2D plan(const amp::Problem2D& problem) override;
 };
 
 class MyRRT : public amp::GoalBiasRRT2D, public MyPMP2D {
     public:
+    /// @brief performs GoalBiasRRT on the given problem using the class member variables as parameters.
         virtual amp::Path2D plan(const amp::Problem2D& problem) override;
 
         void set_eps(double new_eps) {eps= new_eps;};
