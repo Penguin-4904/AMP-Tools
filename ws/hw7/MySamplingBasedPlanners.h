@@ -8,37 +8,48 @@
 #include "Collision.h"
 #include "MyAStar.h"
 
-class MyPRM : public amp::PRM2D {
+class MyPMP2D : public amp::PointMotionPlanner2D {
     public:
+        size_t get_n() {return n;};
 
-    virtual amp::Path2D plan(const amp::Problem2D& problem) override;
+        size_t get_r() {return r;};
 
-    size_t get_n() {return n;};
+        void set_n(size_t new_n) {n = new_n;};
 
-    size_t get_r() {return r;};
+        void set_r(double new_r) {r = new_r;};
 
-    void set_n(size_t new_n) {n = new_n;};
+        void set_path_smoothing(bool smooth) {path_smoothing = smooth;};
 
-    void set_r(double new_r) {r = new_r;};
+        const std::shared_ptr<amp::Graph<double>> get_graphPtr() {return graphPtr;};
 
-    void set_path_smoothing(bool smooth) {path_smoothing = smooth;};
+        std::map<amp::Node, Eigen::Vector2d> get_nodes() {return nodes;};
 
-    const std::shared_ptr<amp::Graph<double>> get_graphPtr() {return graphPtr;};
+        virtual ~MyPMP2D() {}
 
-    std::map<amp::Node, Eigen::Vector2d> get_nodes() {return nodes;};
-
-    private:
+    protected:
         size_t n = 200;
         double r = 1;
         bool path_smoothing = false;
         std::shared_ptr<amp::Graph<double>> graphPtr = std::make_shared<amp::Graph<double>>();
         std::map<amp::Node, Eigen::Vector2d> nodes;
-
 };
 
-class MyRRT : public amp::GoalBiasRRT2D {
+class MyPRM : public amp::PRM2D, public MyPMP2D {
     public:
         virtual amp::Path2D plan(const amp::Problem2D& problem) override;
+};
+
+class MyRRT : public amp::GoalBiasRRT2D, public MyPMP2D {
+    public:
+        virtual amp::Path2D plan(const amp::Problem2D& problem) override;
+
+        void set_eps(double new_eps) {eps= new_eps;};
+
+        void set_p_goal(double new_p_goal) {p_goal = new_p_goal;};
+
+    private:
+        double eps = 0.25;
+        double p_goal = 0.05;
 };
 
 // Coppied from HW6.h

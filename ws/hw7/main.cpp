@@ -6,20 +6,20 @@
 
 using namespace amp;
 
-void benchmark_algo(PointMotionPlanner2D& algo, const Problem2D& problem, const std::vector<std::pair<size_t, double>> benchmarks, const std::string& title = std::string()){
+void benchmark_algo(MyPMP2D& algo, const Problem2D& problem, const std::vector<std::pair<size_t, double>> benchmarks, const std::string& title = std::string()){
     std::vector<std::string> labels;
     Path2D path;
     std::list<std::vector<double>> time_datas;
     std::list<std::vector<double>> length_datas;
 
     for (size_t i = 0; i < benchmarks.size(); i++) {
-        prm.set_n(benchmarks[i].first);
-        prm.set_r(benchmarks[i].second);
+        algo.set_n(benchmarks[i].first);
+        algo.set_r(benchmarks[i].second);
         std::vector<double> time_data;
         std::vector<double> length_data;
         for (size_t i = 0; i < 100; i++){
             Timer timer("timer 1");
-            path = prm.plan(problem);
+            path = algo.plan(problem);
             timer.stop();
             if (HW7::check(path, problem, false)) {
                 time_data.push_back(timer.now());
@@ -28,17 +28,45 @@ void benchmark_algo(PointMotionPlanner2D& algo, const Problem2D& problem, const 
         }
         time_datas.push_back(time_data);
         length_datas.push_back(length_data);
-        labels.push_back("n=" << benchmarks[i].first << "\nr=" << benchmarks[i].second);
-        LOG(labels[i] << " # of valid solutions: " << time_data.size());
+        labels.push_back("n=" + std::to_string(benchmarks[i].first) + "\nr=" + std::to_string(benchmarks[i].second).substr(0, 4));
+        LOG(title << ": " << labels[i] << " # of valid solutions: " << time_data.size());
     }
 
-    Visualizer::makeBoxPlot(time_datas, labels, title << " Computation Time Benchmarks (100 Trials of Each)", "n = # of samples, r = connection radius", "Time (ms)");
-    Visualizer::makeBoxPlot(length_datas, labels, title << " Path Length Benchmarks (100 Trials of Each)", "n = # of samples, r = connection radius", "Path Length");
+    Visualizer::makeBoxPlot(time_datas, labels, title + " Computation Time (100 Trials)", "n = # of samples, r = connection radius", "Time (ms)");
+    Visualizer::makeBoxPlot(length_datas, labels, title + " Path Length (100 Trials)", "n = # of samples, r = connection radius", "Path Length");
+
+}
+
+void benchmark_algo(MyPMP2D& algo, std::vector<Problem2D> problems, const std::vector<std::string>& problem_labels, const std::string& title = std::string()){
+
+    Path2D path;
+    std::list<std::vector<double>> time_datas;
+    std::list<std::vector<double>> length_datas;
+
+    for (size_t i = 0; i < problems.size(); i++) {
+        std::vector<double> time_data;
+        std::vector<double> length_data;
+        for (size_t j = 0; j < 100; j++){
+            Timer timer("timer 1");
+            path = algo.plan(problems[i]);
+            timer.stop();
+            if (HW7::check(path, problems[i], false)) {
+                time_data.push_back(timer.now());
+                length_data.push_back(path.length());
+            }
+        }
+        time_datas.push_back(time_data);
+        length_datas.push_back(length_data);
+        LOG(title << ": " << problem_labels[i] << " # of valid solutions: " << time_data.size());
+    }
+
+    Visualizer::makeBoxPlot(time_datas, problem_labels, title + " Computation Time (100 Trials)", "n = # of samples, r = connection radius", "Time (ms)");
+    Visualizer::makeBoxPlot(length_datas, problem_labels, title + " Path Length (100 Trials)", "n = # of samples, r = connection radius", "Path Length");
 
 }
 
 int main(int argc, char** argv) {
-    HW7::hint(); // Consider implementing an N-dimensional planner 
+//    HW7::hint(); // Consider implementing an N-dimensional planner
 
 //    // Example of creating a graph and adding nodes for visualization
     std::shared_ptr<amp::Graph<double>> graphPtr = std::make_shared<amp::Graph<double>>();
@@ -59,36 +87,90 @@ int main(int argc, char** argv) {
     problem.y_min = -3;
     problem.y_max = 3;
 
+    std::vector<Problem2D> problems;
+    problems.push_back(problem);
+
     MyPRM prm;
     prm.set_n(200);
     prm.set_r(1);
 
     Path2D path = prm.plan(problem);
-    LOG("Path Length Ex 1. (a): " << path.length());
+    LOG("PRM Path Length Ex 1.(a): " << path.length());
     Visualizer::makeFigure(problem, path, *prm.get_graphPtr(), prm.get_nodes());
 
     std::vector<std::pair<size_t, double>> benchmarks = {{200, 0.5}, {200, 1}, {200, 1.5}, {200, 2}, {500, 0.5}, {500, 1}, {500, 1.5}, {500, 2}};
-    benchmark_algo(prm, problem, bechmarks, "Ex 1.(a) (HW5 Ex 2.(a))");
+    benchmark_algo(prm, problem, benchmarks, "Ex 1.(a) (HW5 Ex 2.(a))");
+    prm.set_path_smoothing(true);
+    benchmark_algo(prm, problem, benchmarks, "Ex 1.(a) (HW5 Ex 2.(a)) \\w smoothing");
 
-    problem
+    problem = HW2::getWorkspace1();
+    problems.push_back(problem);
 
     prm.set_n(200);
-    prm.set_r(1);
+    prm.set_r(2);
+    prm.set_path_smoothing(false);
 
-    Path2D path = prm.plan(problem);
-    LOG("Path Length Ex 1. (a): " << path.length());
+    path = prm.plan(problem);
+    LOG("PRM Path Length Ex 1.(b) W1: " << path.length());
     Visualizer::makeFigure(problem, path, *prm.get_graphPtr(), prm.get_nodes());
 
+    prm.set_n(500);
 
+    path = prm.plan(problem);
+    LOG("PRM Path Length Ex 1.(b) W1 try 2: " << path.length());
+    Visualizer::makeFigure(problem, path, *prm.get_graphPtr(), prm.get_nodes());
 
-    // Generate a random problem and test RRT
-//    MyRRT rrt;
-//    // Path2D path;
-//    HW7::generateAndCheck(rrt, path, problem);
-//    Visualizer::makeFigure(problem, path, *graphPtr, nodes);
+    benchmarks = {{200, 1}, {200, 2}, {500, 1}, {500, 2}, {1000, 1}, {1000, 2}};
+    benchmark_algo(prm, problem, benchmarks, "Ex 1.(b) W1 (HW2 Ex 2)");
+    prm.set_path_smoothing(true);
+    benchmark_algo(prm, problem, benchmarks, "Ex 1.(b) W1 (HW2 Ex 2) \\w smoothing");
+
+    problem = HW2::getWorkspace2();
+    problems.push_back(problem);
+
+    prm.set_n(200);
+    prm.set_r(2);
+    prm.set_path_smoothing(false);
+
+    path = prm.plan(problem);
+    LOG("PRM Path Length Ex 1.(b) W2: " << path.length());
+    Visualizer::makeFigure(problem, path, *prm.get_graphPtr(), prm.get_nodes());
+
+    prm.set_n(1000);
+
+    path = prm.plan(problem);
+    LOG("PRM Path Length Ex 1.(b) W2 2nd try: " << path.length());
+    Visualizer::makeFigure(problem, path, *prm.get_graphPtr(), prm.get_nodes());
+
+    benchmark_algo(prm, problem, benchmarks, "Ex 1.(b) W2 (HW2 Ex 2)");
+    prm.set_path_smoothing(true);
+    benchmark_algo(prm, problem, benchmarks, "Ex 1.(b) W2 (HW2 Ex 2) \\w smoothing");
+
+    MyRRT rrt;
+    rrt.set_n(5000);
+    rrt.set_r(0.5);
+
+    path = rrt.plan(problems[0]);
+    HW7::check(path, problems[0]);
+    LOG("RRT Path Length Ex 1.(a): " << path.length());
+    Visualizer::makeFigure(problems[0], path, *rrt.get_graphPtr(), rrt.get_nodes());
+
+    path = rrt.plan(problems[1]);
+    LOG("RRT Path Length Ex 1.(b) W1: " << path.length());
+    Visualizer::makeFigure(problems[1], path, *rrt.get_graphPtr(), rrt.get_nodes());
+
+    path = rrt.plan(problems[2]);
+    LOG("RRT Path Length Ex 1.(b) W2: " << path.length());
+    Visualizer::makeFigure(problems[2], path, *rrt.get_graphPtr(), rrt.get_nodes());
+
+    benchmark_algo(rrt, problems, {"Ex 1.(a)", "Ex 1.(b) W1", "Ex 1.(b) W2"}, "Ex 2.(b) (RRT Benchmarks)");
+
     Visualizer::saveFigures(true, "hw7_figs");
-//
-//    // Grade method
-//    HW7::grade<MyPRM, MyRRT>("firstName.lastName@colorado.edu", argc, argv, std::make_tuple(), std::make_tuple());
-//    return 0;
+
+    prm.set_n(1000);
+    prm.set_r(2);
+    prm.set_path_smoothing(false);
+
+    HW7::grade(prm, rrt, "Katrina.Braun@colorado.edu", argc, argv);
+    return 0;
 }
