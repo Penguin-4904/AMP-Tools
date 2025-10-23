@@ -21,6 +21,7 @@ void timer_example() {
 int main(int argc, char** argv) {
     // Initializing workspace 1 with 3 agents
     amp::RNG::seed(amp::RNG::randiUnbounded());
+
     MultiAgentPath2D path;
     MultiAgentProblem2D problem = HW8::getWorkspace1(3);
     std::vector<std::vector<Eigen::Vector2d>> collision_states;

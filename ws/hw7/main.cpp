@@ -66,7 +66,7 @@ void benchmark_algo(MyPMP2D& algo, std::vector<Problem2D> problems, const std::v
 }
 
 int main(int argc, char** argv) {
-//    HW7::hint(); // Consider implementing an N-dimensional planner
+    HW7::hint(); // Consider implementing an N-dimensional planner
 
     MyPRM prm;
     Problem2D problem;
