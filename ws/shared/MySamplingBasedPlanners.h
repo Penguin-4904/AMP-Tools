@@ -50,10 +50,26 @@ class MyRRT : public amp::GoalBiasRRT2D, public MyPMP2D {
 
         void set_p_goal(double new_p_goal) {p_goal = new_p_goal;};
 
+        std::shared_ptr<SamplingCollisionChecker> ccPtr = std::make_shared<SamplingCollisionChecker>();
+
     private:
         double eps = 0.25;
         double p_goal = 0.05;
+
 };
+
+class SamplingCollisionChecker {
+    public:
+        virtual bool check_collisions(const Eigen::Vector2d& q_new, const Eigen::Vector2d& q_near, const std::vector<amp::Obstacle2D>& obstacles) = 0;
+
+        virtual ~SamplingCollisionChecker() {}
+};
+
+class RRT_SCC : public SamplingCollisionChecker {
+    public:
+        virtual bool check_collisions(const Eigen::Vector2d& q_new, const Eigen::Vector2d& q_near, const std::vector<amp::Obstacle2D>& obstacles) override;
+};
+
 
 // Coppied from HW6.h
 struct LookupSearchHeuristic : public amp::SearchHeuristic {

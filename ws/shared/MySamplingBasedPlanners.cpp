@@ -105,7 +105,7 @@ amp::Path2D MyRRT::plan(const amp::Problem2D& problem) {
 
         point = r * (point - nodes[best_dist.first]).normalized() + nodes[best_dist.first];
 
-        if (!check_chain_collisions(std::vector<Eigen::Vector2d>{point, nodes[best_dist.first]}, problem.obstacles)){
+        if (!cc->check_collisions(point, nodes[best_dist.first], problem.obstacles)){
             graphPtr->connect(best_dist.first, i, r);
             nodes[i] = point;
 
@@ -131,4 +131,8 @@ amp::Path2D MyRRT::plan(const amp::Problem2D& problem) {
     reverse(path.waypoints.begin(), path.waypoints.end());
 
     return path;
+}
+
+bool RRT_SCC::check_collisions(const Eigen::Vector2d& q_new, const Eigen::Vector2d& q_near, const std::vector<amp::Obstacle2D>& obstacles) {
+    return check_chain_collisions(std::vector<Eigen::Vector2d>{q_new, q_near}, problem.obstacles);
 }

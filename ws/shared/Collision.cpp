@@ -5,7 +5,7 @@
 #include "Collision.h"
 
 /// @brief checks if point is inside any of the given obstacles.
-bool check_collisions(const Eigen::Vector2d& point, const std::vector<amp::Obstacle2D>& obstacles, const double r = 0.0001) {
+bool check_collisions(const Eigen::Vector2d& point, const std::vector<amp::Obstacle2D>& obstacles, const double r) {
     size_t numObstacles = obstacles.size();
 
     for (int i = 0; i < numObstacles; i++){
@@ -18,7 +18,7 @@ bool check_collisions(const Eigen::Vector2d& point, const std::vector<amp::Obsta
 }
 
 /// @brief checks if point is inside obstacle. Assumes convex polygon obstacle.
-bool collide_object(const Eigen::Vector2d& point, const amp::Obstacle2D& obstacle, const double r = 0.0001){
+bool collide_object(const Eigen::Vector2d& point, const amp::Obstacle2D& obstacle, const double r){
     std::vector<Eigen::Vector2d> vertices = obstacle.verticesCCW();
     size_t numVertices = vertices.size();
 
@@ -136,26 +136,27 @@ bool check_cell_collisions(const Eigen::Vector2d center, const double width, con
     return false;
 }
 
-bool check_multi_agent_disk_collisions(const Eigen::VectorXd& pointA, const Eigen::VectorXd& pointB, const std::vector<double>& radii, const std::vector<amp::Obstacle2D>& obstacles){
-    size_t numObstacles = obstacles.size();
-    size_t numAgents = radii.size();
-
-    for (size_t i = 0; i < numAgents; i++){
-        for (const amp::Obstacle2D& obstacle : obstacles) {
-            if (collide_disk_trajectory_object(pointA({i * 2, i * 2 + 1}), pointB({i * 2, i * 2 + 1}), radii[i], obstacle)) {
-                return true;
-            }
-        }
-
-        for (size_t j = i + 1; j < numAgents; j++){
-            if (collide_disk_trajectories(pointA({i * 2, i * 2 + 1}), pointB({i * 2, i * 2 + 1}), radii[i],
-                                          pointA({j * 2, j * 2 + 1}), pointB({j * 2, j * 2 + 1}), radii[j])){
-                return true;
-            }
-        }
-    }
-    return false;
-}
+// Not use full
+//bool check_multi_agent_disk_collisions(const Eigen::VectorXd& pointA, const Eigen::VectorXd& pointB, const std::vector<double>& radii, const std::vector<amp::Obstacle2D>& obstacles){
+//    size_t numObstacles = obstacles.size();
+//    size_t numAgents = radii.size();
+//
+//    for (size_t i = 0; i < numAgents; i++){
+//        for (const amp::Obstacle2D& obstacle : obstacles) {
+//            if (collide_disk_trajectory_object(pointA({i * 2, i * 2 + 1}), pointB({i * 2, i * 2 + 1}), radii[i], obstacle)) {
+//                return true;
+//            }
+//        }
+//
+//        for (size_t j = i + 1; j < numAgents; j++){
+//            if (collide_disk_trajectories(pointA({i * 2, i * 2 + 1}), pointB({i * 2, i * 2 + 1}), radii[i],
+//                                          pointA({j * 2, j * 2 + 1}), pointB({j * 2, j * 2 + 1}), radii[j])){
+//                return true;
+//            }
+//        }
+//    }
+//    return false;
+//}
 
 bool collide_disk_trajectory_object(const Eigen::Vector2d& start, const Eigen::Vector2d& end, const double& radius, const amp::Obstacle2D& obstacle) {
     std::vector<Eigen::Vector2d> vertices = obstacle.verticesCCW();
@@ -178,24 +179,8 @@ bool collide_disk_trajectory_object(const Eigen::Vector2d& start, const Eigen::V
     return false;
 }
 
-double get_closest_dist(const Eigen::Vector2d& point, const Eigen::Vector2d& start, const Eigen::Vector2d& end){
-    Eigen::Vector2d n = (end - start).normalized();
-    Eigen::Vector2d r = point - start;
-
-    double dist = r(0) * n(1) - r(1) * n(0);
-    double t = r.dot(n)/(end - start).norm();
-
-    if (t < 0) {
-        return r.norm() * dist/abs(dist);
-    }
-    if (t > 1) {
-        return (point - end).norm() * dist/abs(dist);
-    }
-    return dist;
-}
-
 bool collide_disk_trajectories(const Eigen::Vector2d& start_1, const Eigen::Vector2d& end_1, const double& radius_1,
-                             const Eigen::Vector2d& start_2, const Eigen::Vector2d& end_2, const double& radius_2){
+                               const Eigen::Vector2d& start_2, const Eigen::Vector2d& end_2, const double& radius_2){
     double dist_sqrd = (radius_1 + radius_2) * (radius_1 + radius_2);
 
     Eigen::Vector2d start_diff = start_1 - start_2;
@@ -220,4 +205,44 @@ bool collide_disk_trajectories(const Eigen::Vector2d& start_1, const Eigen::Vect
     }
 
     return false;
+}
+
+double get_closest_dist(const Eigen::Vector2d& point, const Eigen::Vector2d& start, const Eigen::Vector2d& end){
+    Eigen::Vector2d n = (end - start).normalized();
+    Eigen::Vector2d r = point - start;
+
+    double dist = r(0) * n(1) - r(1) * n(0);
+    double t = r.dot(n)/(end - start).norm();
+
+    if (t < 0) {
+        return r.norm() * dist/abs(dist);
+    }
+    if (t > 1) {
+        return (point - end).norm() * dist/abs(dist);
+    }
+    return dist;
+}
+
+Eigen::VectorXd linear_interp(const double& time, const std::vector<Eigen::Vector2d>& points, const std::vector<double>& times) {
+    if (times.size() != points.size()){
+        return Eigen::VectorXd::Constant(points.size(), NAN);
+    }
+
+    int index = -1;
+
+    for (size_t i = 0; i < times.size(); i++){
+        if (times[i] < time){
+            index = i;
+        }
+    }
+
+    if (index < 0) {
+        return points[0];
+    }
+
+    if (index >= times.size() - 1){
+        return points.back();
+    }
+
+    return (points[index + 1] - points[index]) * (time - times[index]) / (times[index + 1] - times[index]) + points[index];
 }

@@ -25,11 +25,13 @@ bool check_cell_collisions(const Eigen::Vector2d center, const double width, con
 /// @brief checks if the chain of joints/points collides with any of the obstacles
 bool check_chain_collisions(const std::vector<Eigen::Vector2d>& points, const std::vector<amp::Obstacle2D>& obstacles);
 
-bool check_multi_agent_disk_collisions(const Eigen::VectorXd& pointA, const Eigen::VectorXd& pointB, const std::vector<double>& radii, const std::vector<amp::Obstacle2D>& obstacles);
+// bool check_multi_agent_disk_collisions(const Eigen::VectorXd& pointA, const Eigen::VectorXd& pointB, const std::vector<double>& radii, const std::vector<amp::Obstacle2D>& obstacles);
 
 bool collide_disk_trajectory_object(const Eigen::Vector2d& start, const Eigen::Vector2d& end, const double& radius, const amp::Obstacle2D& obstacle);
 
-double get_closest_dist(const Eigen::Vector2d& point, const Eigen::Vector2d& start, const Eigen::Vector2d& end);
-
 bool collide_disk_trajectories(const Eigen::Vector2d& start_1, const Eigen::Vector2d& end_1, const double& radius_1,
                                const Eigen::Vector2d& start_2, const Eigen::Vector2d& end_2, const double& radius_2);
+
+double get_closest_dist(const Eigen::Vector2d& point, const Eigen::Vector2d& start, const Eigen::Vector2d& end);
+
+Eigen::VectorXd linear_interp(const double& time, const std::vector<Eigen::Vector2d>& points, const std::vector<double>& times);
