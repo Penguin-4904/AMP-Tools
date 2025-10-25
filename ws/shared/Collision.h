@@ -34,4 +34,4 @@ bool collide_disk_trajectories(const Eigen::Vector2d& start_1, const Eigen::Vect
 
 double get_closest_dist(const Eigen::Vector2d& point, const Eigen::Vector2d& start, const Eigen::Vector2d& end);
 
-Eigen::VectorXd linear_interp(const double& time, const std::vector<Eigen::Vector2d>& points, const std::vector<double>& times);
+Eigen::Vector2d linear_interp(const double& time, const std::vector<Eigen::Vector2d>& points, const std::vector<double>& times);

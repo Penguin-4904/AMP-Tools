@@ -33,10 +33,10 @@ int main(int argc, char** argv) {
     Visualizer::makeFigure(problem, path, collision_states);
 
     // Solve using a decentralized approach
-//    MyDecentralPlanner decentral_planner;
-//    collision_states = {{}};
-//    HW8::generateAndCheck(decentral_planner, path, problem, collision_states);
-//    Visualizer::makeFigure(problem, path, collision_states);
+    MyDecentralPlanner decentral_planner;
+    collision_states = {{}};
+    HW8::generateAndCheck(decentral_planner, path, problem, collision_states);
+    Visualizer::makeFigure(problem, path, collision_states);
 
     // Visualize and grade methods
     Visualizer::saveFigures(true, "hw8_figs");

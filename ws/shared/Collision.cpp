@@ -223,9 +223,9 @@ double get_closest_dist(const Eigen::Vector2d& point, const Eigen::Vector2d& sta
     return dist;
 }
 
-Eigen::VectorXd linear_interp(const double& time, const std::vector<Eigen::Vector2d>& points, const std::vector<double>& times) {
+Eigen::Vector2d linear_interp(const double& time, const std::vector<Eigen::Vector2d>& points, const std::vector<double>& times) {
     if (times.size() != points.size()){
-        return Eigen::VectorXd::Constant(points.size(), NAN);
+        return Eigen::Vector2d(NAN, NAN);
     }
 
     int index = -1;

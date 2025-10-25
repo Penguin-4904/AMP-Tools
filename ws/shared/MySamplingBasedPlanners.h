@@ -9,7 +9,7 @@
 #include "MyAStar.h"
 
 /// @brief virtual class for both MyPRM and MyRRT to pull from since they both have n, r, nodes, and graphPtr as variables
-class MyPMP2D : public amp::PointMotionPlanner2D {
+class MyPMP2DTemplate {
     public:
         size_t get_n() {return n;};
 
@@ -25,23 +25,23 @@ class MyPMP2D : public amp::PointMotionPlanner2D {
 
         std::map<amp::Node, Eigen::Vector2d> get_nodes() {return nodes;};
 
-        virtual ~MyPMP2D() {}
+        virtual ~MyPMP2DTemplate() {}
 
     protected:
-        size_t n = 200;
-        double r = 1;
+        size_t n = 7500;
+        double r = 0.5;
         bool path_smoothing = false;
         std::shared_ptr<amp::Graph<double>> graphPtr = std::make_shared<amp::Graph<double>>();
         std::map<amp::Node, Eigen::Vector2d> nodes;
 };
 
-class MyPRM : public amp::PRM2D, public MyPMP2D {
+class MyPRM : public amp::PRM2D, public MyPMP2DTemplate {
     public:
     /// @brief performs PRM on the given problem using the class member variables as parameters.
         virtual amp::Path2D plan(const amp::Problem2D& problem) override;
 };
 
-class MyRRT : public amp::GoalBiasRRT2D, public MyPMP2D {
+class MyRRT : public amp::GoalBiasRRT2D, public MyPMP2DTemplate {
     public:
     /// @brief performs GoalBiasRRT on the given problem using the class member variables as parameters.
         virtual amp::Path2D plan(const amp::Problem2D& problem) override;
@@ -50,24 +50,10 @@ class MyRRT : public amp::GoalBiasRRT2D, public MyPMP2D {
 
         void set_p_goal(double new_p_goal) {p_goal = new_p_goal;};
 
-        std::shared_ptr<SamplingCollisionChecker> ccPtr = std::make_shared<SamplingCollisionChecker>();
-
-    private:
+    protected:
         double eps = 0.25;
         double p_goal = 0.05;
 
-};
-
-class SamplingCollisionChecker {
-    public:
-        virtual bool check_collisions(const Eigen::Vector2d& q_new, const Eigen::Vector2d& q_near, const std::vector<amp::Obstacle2D>& obstacles) = 0;
-
-        virtual ~SamplingCollisionChecker() {}
-};
-
-class RRT_SCC : public SamplingCollisionChecker {
-    public:
-        virtual bool check_collisions(const Eigen::Vector2d& q_new, const Eigen::Vector2d& q_near, const std::vector<amp::Obstacle2D>& obstacles) override;
 };
 
 
