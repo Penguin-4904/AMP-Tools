@@ -9,6 +9,7 @@ amp::MultiAgentPath2D MyCentralPlanner::plan(const amp::MultiAgentProblem2D& pro
     std::map<amp::Node, std::vector<std::vector<double>>> distances;
 
     size_t numAgents = problem.numAgents();
+    std::map<size_t, bool> reached_goal;
 
     Eigen::VectorXd init(numAgents * 2);
     Eigen::VectorXd goal(numAgents * 2);
@@ -32,6 +33,8 @@ amp::MultiAgentPath2D MyCentralPlanner::plan(const amp::MultiAgentProblem2D& pro
         if (smallest_radius > problem.agent_properties[i].radius){
             smallest_radius = problem.agent_properties[i].radius;
         }
+
+        reached_goal[i] = false;
     }
 
     nodes[0] = init;
@@ -46,7 +49,12 @@ amp::MultiAgentPath2D MyCentralPlanner::plan(const amp::MultiAgentProblem2D& pro
             point = goal;
         } else {
             for (size_t j = 0; j < numAgents; j++) {
-                point({j * 2, j * 2 + 1}) = Eigen::Vector2d(amp::RNG::randd(problem.x_min, problem.x_max), amp::RNG::randd(problem.y_min, problem.y_max));
+                if (reached_goal[j]) {
+                    point({j * 2, j * 2 + 1}) = problem.agent_properties[i].q_goal;
+                } else {
+                    point({j * 2, j * 2 + 1}) = Eigen::Vector2d(amp::RNG::randd(problem.x_min, problem.x_max),
+                                                                amp::RNG::randd(problem.y_min, problem.y_max));
+                }
             }
         }
 
@@ -75,6 +83,15 @@ amp::MultiAgentPath2D MyCentralPlanner::plan(const amp::MultiAgentProblem2D& pro
             nodes[i] = point;
             distances[i] = dist;
             paths[i] = path;
+            LOG("# of Nodes: " << nodes.size());
+
+//            for (size_t j = 0; j < numAgents; j++) {
+//                if ((!reached_goal[j]) && ((point({j * 2, j * 2 + 1}) - problem.agent_properties[j].q_goal).norm() < r)){
+//                    LOG(j);
+//                    reached_goal[j] = true;
+//                    return final_path;
+//                }
+//            }
 
             if ((point - goal).norm() < eps){
 
@@ -91,6 +108,8 @@ amp::MultiAgentPath2D MyCentralPlanner::plan(const amp::MultiAgentProblem2D& pro
         }
     }
 
+    size = nodes.size();
+    LOG("# of Subdivisions: " << subdivisions);
     return final_path;
 }
 
@@ -98,6 +117,8 @@ amp::MultiAgentPath2D MyDecentralPlanner::plan(const amp::MultiAgentProblem2D& p
 
     DecentralGBRRT RRTAlgo;
     std::shared_ptr<LerpTimingfunction> timing_function = std::make_shared<LerpTimingfunction>();
+
+    size = 0;
 
     RRTAlgo.set_n(n);
     RRTAlgo.set_r(r);
@@ -118,13 +139,13 @@ amp::MultiAgentPath2D MyDecentralPlanner::plan(const amp::MultiAgentProblem2D& p
     amp::MultiAgentPath2D path;
 
     for (size_t i = 0; i < numAgents; i++){
-        LOG(i);
         RRTAlgo.set_radius(problem.agent_properties[i].radius);
         agent_problem.q_init = problem.agent_properties[i].q_init;
         agent_problem.q_goal = problem.agent_properties[i].q_goal;
         amp::Path2D agent_path = RRTAlgo.plan(agent_problem);
         path.agent_paths.push_back(agent_path);
         timing_function->add_path(agent_path.waypoints, RRTAlgo.get_dist(), problem.agent_properties[i].radius);
+        size += RRTAlgo.get_nodes().size();
     }
 
     return path;
@@ -161,7 +182,8 @@ amp::Path2D DecentralGBRRT::plan(const amp::Problem2D& problem) {
 
         point = r * (point - nodes[best_dist.first]).normalized() + nodes[best_dist.first];
 
-        double dist = distance[best_dist.first] + best_dist.second;
+        double dist = distance[best_dist.first] + r;
+
         if (!check_decentralmultiagent_collisions_subdivision(point, nodes[best_dist.first], dist,
                                                               distance[best_dist.first], radius, TimingfunctionPtr,
                                                               problem.obstacles, subdivision)){
@@ -171,6 +193,8 @@ amp::Path2D DecentralGBRRT::plan(const amp::Problem2D& problem) {
 
             if ((point - problem.q_goal).norm() < eps){
                 graphPtr->connect(i, n, (point - problem.q_goal).norm());
+                distance[n] = dist + (point - problem.q_goal).norm();
+                // Could cause collision if already determined paths pass by at later time. need to check?
                 break;
             }
         }
@@ -180,6 +204,7 @@ amp::Path2D DecentralGBRRT::plan(const amp::Problem2D& problem) {
 
     amp::Path2D path;
     path.waypoints.push_back(problem.q_goal);
+    last_dist_vector.push_back(distance[n]);
     std::vector<amp::Node> parents = graphPtr->parents(n);
 
 
@@ -190,6 +215,7 @@ amp::Path2D DecentralGBRRT::plan(const amp::Problem2D& problem) {
     }
 
     reverse(path.waypoints.begin(), path.waypoints.end());
+    reverse(last_dist_vector.begin(), last_dist_vector.end());
 
     return path;
 }
@@ -210,12 +236,12 @@ bool check_decentralmultiagent_collisions_subdivision(const Eigen::Vector2d& q_n
 
     std::vector<double> radii = timing_function->get_radii();
 
-    for (size_t j = 0; j < subdivisions + 1; j++){
-
-        size_t iters = std::pow(2, j - 1);
+    for (int j = 0; j < subdivisions + 1; j++){
+        size_t iters = std::pow(2, double(j - 1.0));
         double step = 0.5/iters;
         if (j == 0) {
             iters = 1;
+            step = 1;
         }
 
         for (size_t k = 0; k < iters; k++){
@@ -224,7 +250,7 @@ bool check_decentralmultiagent_collisions_subdivision(const Eigen::Vector2d& q_n
             double time = t * (t_new - t_near) + t_near;
             std::vector<Eigen::Vector2d> samples = timing_function->get_locations(time);
             for (size_t l = 0; l < samples.size(); l++){
-                if ((sample - samples[l]).norm() <= radius + radii[l]) {
+                if ((sample - samples[l]).norm() <= (radius + radii[l])) {
                     return true;
                 }
             }
@@ -234,6 +260,8 @@ bool check_decentralmultiagent_collisions_subdivision(const Eigen::Vector2d& q_n
             }
         }
     }
+
+    return false;
 }
 
 bool check_multiagent_collisions_subdivision(const std::vector<std::vector<Eigen::Vector2d>>& paths,
@@ -241,13 +269,14 @@ bool check_multiagent_collisions_subdivision(const std::vector<std::vector<Eigen
                                              const std::vector<amp::Obstacle2D>& obstacles, size_t subdivisions, size_t numAgents) {
 
     size_t numPaths = paths.size();
-
-    for (size_t j = 0; j < subdivisions + 1; j++){
+    // return false; //
+    for (int j = 0; j < subdivisions + 1; j++){
 
         size_t iters = std::pow(2, j - 1);
         double step = 0.5/iters;
         if (j == 0) {
             iters = 1;
+            step = 1;
         }
 
         for (size_t k = 0; k < iters; k++){
@@ -256,7 +285,7 @@ bool check_multiagent_collisions_subdivision(const std::vector<std::vector<Eigen
                 Eigen::Vector2d sample_i = linear_interp(t, {paths[i][paths[i].size() - 2], paths[i].back()}, {0, 1});
                 double time = t * (times[i].back() - times[i][times[i].size() - 2]) + times[i][times[i].size() - 2];
                 for (size_t l = 0; l < numPaths; l++){
-                    if (l != i){
+                    if ((l != i)){//&& (time <= times[l].back())){
                         Eigen::Vector2d sample_l = linear_interp(time, paths[l], times[l]);
                         if ((sample_i - sample_l).norm() <= radii[i] + radii[l]) {
                             return true;
@@ -270,6 +299,7 @@ bool check_multiagent_collisions_subdivision(const std::vector<std::vector<Eigen
             }
         }
     }
+    return false;
 }
 
 bool check_disk_collisions(const Eigen::Vector2d& center, const double& radius, const std::vector<amp::Obstacle2D>& obstacles) {
@@ -278,6 +308,7 @@ bool check_disk_collisions(const Eigen::Vector2d& center, const double& radius, 
             return true;
         }
     }
+    return false;
 }
 
 bool collide_disk_object(const Eigen::Vector2d& center, const double& radius, const amp::Obstacle2D& obstacle){

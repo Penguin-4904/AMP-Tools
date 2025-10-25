@@ -12,19 +12,23 @@
 
 class MultiAgentRRTTemplate {
     public:
-        void set_n(size_t new_n) {n = new_n;};
+        void set_n(size_t new_n) {n = new_n;}
 
-        void set_r(double new_r) {r = new_r;};
+        void set_r(double new_r) {r = new_r;}
 
-        void set_eps(double new_eps) {eps= new_eps;};
+        void set_eps(double new_eps) {eps= new_eps;}
 
-        void set_p_goal(double new_p_goal) {p_goal = new_p_goal;};
+        void set_p_goal(double new_p_goal) {p_goal = new_p_goal;}
+
+        size_t get_size() {return size;}
 
     protected:
         size_t n = 7500;
         double r = 0.5;
         double eps = 0.25;
         double p_goal = 0.05;
+        size_t size = 0;
+
 
 };
 
