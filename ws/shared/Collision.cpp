@@ -137,37 +137,43 @@ bool check_cell_collisions(const Eigen::Vector2d center, const double width, con
 }
 
 // Not use full
-//bool check_multi_agent_disk_collisions(const Eigen::VectorXd& pointA, const Eigen::VectorXd& pointB, const std::vector<double>& radii, const std::vector<amp::Obstacle2D>& obstacles){
-//    size_t numObstacles = obstacles.size();
-//    size_t numAgents = radii.size();
-//
-//    for (size_t i = 0; i < numAgents; i++){
-//        for (const amp::Obstacle2D& obstacle : obstacles) {
-//            if (collide_disk_trajectory_object(pointA({i * 2, i * 2 + 1}), pointB({i * 2, i * 2 + 1}), radii[i], obstacle)) {
-//                return true;
-//            }
-//        }
-//
-//        for (size_t j = i + 1; j < numAgents; j++){
-//            if (collide_disk_trajectories(pointA({i * 2, i * 2 + 1}), pointB({i * 2, i * 2 + 1}), radii[i],
-//                                          pointA({j * 2, j * 2 + 1}), pointB({j * 2, j * 2 + 1}), radii[j])){
-//                return true;
-//            }
-//        }
-//    }
-//    return false;
-//}
+bool check_multi_agent_disk_collisions(const Eigen::VectorXd& pointA, const Eigen::VectorXd& pointB, const std::vector<double>& radii, const std::vector<amp::Obstacle2D>& obstacles){
+    size_t numObstacles = obstacles.size();
+    size_t numAgents = radii.size();
+
+    for (size_t i = 0; i < numAgents; i++){
+        for (const amp::Obstacle2D& obstacle : obstacles) {
+            if (collide_disk_trajectory_object(pointA({i * 2, i * 2 + 1}), pointB({i * 2, i * 2 + 1}), radii[i], obstacle)) {
+                return true;
+            }
+        }
+
+        for (size_t j = i + 1; j < numAgents; j++){
+            if (collide_disk_trajectories(pointA({i * 2, i * 2 + 1}), pointB({i * 2, i * 2 + 1}), radii[i],
+                                          pointA({j * 2, j * 2 + 1}), pointB({j * 2, j * 2 + 1}), radii[j])){
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
 bool collide_disk_trajectory_object(const Eigen::Vector2d& start, const Eigen::Vector2d& end, const double& radius, const amp::Obstacle2D& obstacle) {
     std::vector<Eigen::Vector2d> vertices = obstacle.verticesCCW();
     size_t numVertices = vertices.size();
 
-    for (int i = 0; i < numVertices - 1; i++){
+    for (int i = 0; i < numVertices; i++){
 
-        double dist_start = get_closest_dist(start, vertices[i], vertices[i + 1]);
-        double dist_end = get_closest_dist(end, vertices[i], vertices[i + 1]);
-        double dist_vert1 = get_closest_dist(vertices[i], start, end);
-        double dist_vert2 = get_closest_dist(vertices[i + 1], start, end);
+        int vertex_1 = i;
+        int vertex_2 = i + 1;
+        if (i >= numVertices - 1){
+            vertex_2 = 0;
+        }
+
+        double dist_start = get_closest_dist(start, vertices[vertex_1], vertices[vertex_2]);
+        double dist_end = get_closest_dist(end, vertices[vertex_1], vertices[vertex_2]);
+        double dist_vert1 = get_closest_dist(vertices[vertex_1], start, end);
+        double dist_vert2 = get_closest_dist(vertices[vertex_2], start, end);
 
         if ((std::signbit(dist_start) != std::signbit(dist_end)) && (std::signbit(dist_vert1) != std::signbit(dist_vert2))){
             return true;
@@ -223,10 +229,10 @@ double get_closest_dist(const Eigen::Vector2d& point, const Eigen::Vector2d& sta
     return dist;
 }
 
-Eigen::Vector2d linear_interp(const double& time, const std::vector<Eigen::Vector2d>& points, const std::vector<double>& times) {
-    if (times.size() != points.size()){
-        return Eigen::Vector2d(NAN, NAN);
-    }
+Eigen::VectorXd linear_interp(const double& time, const std::vector<Eigen::VectorXd>& points, const std::vector<double>& times) {
+//    if (times.size() != points.size()){
+//        return Eigen::VectorXd::Constant(points[0].size(), NAN);
+//    }
 
     int index = -1;
 
@@ -244,5 +250,5 @@ Eigen::Vector2d linear_interp(const double& time, const std::vector<Eigen::Vecto
         return points.back();
     }
 
-    return (points[index + 1] - points[index]) * (time - times[index]) / (times[index + 1] - times[index]) + points[index];
+    return (points[index + 1] - points[index]) * (time - times[index]) / (times[index + 1] - times[index]) + points[index + 1];
 }

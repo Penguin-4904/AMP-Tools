@@ -68,6 +68,7 @@ void benchmark_multiagent_algo(MyDecentralPlanner& algo, const std::vector<Multi
     for (size_t j = 0; j < numProblems; j++){
         std::vector<double> time_data;
         std::vector<double> size_data;
+        size_t num_success = 0;
         for (size_t i = 0; i < numBenchmarks; i++){
             std::cout << "Problem: " << j << " Test: " << i << std::endl;
             Timer timer("timer 1");
@@ -75,10 +76,15 @@ void benchmark_multiagent_algo(MyDecentralPlanner& algo, const std::vector<Multi
             timer.stop();
             time_data.push_back(timer.now());
             size_data.push_back(algo.get_size());
-        }
 
-        collision_states= {{}};
-        bool isValid = HW8::check(path, problems[j], collision_states, false);
+            collision_states= {{}};
+            bool isValid = HW8::check(path, problems[j], collision_states, false);
+            if (isValid) {
+                num_success++;
+            }
+
+        }
+        LOG("Num Success: " << num_success);
         Visualizer::makeFigure(problems[j], path, collision_states);
 
         time_datas.push_back(time_data);
@@ -105,29 +111,39 @@ int main(int argc, char** argv) {
 
     // Solve using a centralized approach
     MyCentralPlanner central_planner;
-    //central_planner.set_n(1000000);
+    central_planner.set_n(1000000);
     //central_planner.set_r(2.5);
     //central_planner.set_eps(1.25);
-    int i = 0;
-    Path2D agent_path;
-    agent_path.waypoints = {problems[i].agent_properties[0].q_init, {2, 12}, {0, 12}, {0, 16}, problems[i].agent_properties[0].q_goal};
-    path.agent_paths.push_back(agent_path);
-    agent_path.waypoints = {problems[i].agent_properties[1].q_init, {2, 12}, {2, 4}, problems[i].agent_properties[1].q_goal};
-    path.agent_paths.push_back(agent_path);
+    int i = 4;
+//    Path2D agent_path;
+//    agent_path.waypoints = {problems[i].agent_properties[0].q_init, {2, 8}, {0, 8}, {0, 16}, problems[i].agent_properties[0].q_goal};
+//    path.agent_paths.push_back(agent_path);
+//    agent_path.waypoints = {problems[i].agent_properties[1].q_init, {2, 12}, {2, 8}, {2, 4}, problems[i].agent_properties[1].q_goal};
+//    path.agent_paths.push_back(agent_path);
 
-
-
-    //path = central_planner.plan(problems[i]);
-    bool isValid = HW8::check(path, problems[i], collision_states);
-    Visualizer::makeFigure(problems[i], path, collision_states);
-    //benchmark_multiagent_algo(central_planner, problems);
+//    path = central_planner.plan(problems[i]);
+//    bool isValid = HW8::check(path, problems[i], collision_states);
+//    Visualizer::makeFigure(problems[i], path, collision_states);
+//    benchmark_multiagent_algo(central_planner, problems);
 //    path = central_planner.plan(problem);
 //    bool isValid = HW8::check(path, problem, collision_states);
 //    Visualizer::makeFigure(problem, path, collision_states);
 
     // Solve using a decentralized approach
     MyDecentralPlanner decentral_planner;
-    //benchmark_multiagent_algo(decentral_planner, problems);
+    path = decentral_planner.plan(problems[i]);
+    bool isValid = HW8::check(path, problems[i], collision_states);
+    Visualizer::makeFigure(problems[i], path, collision_states);
+
+    for (const std::vector<Eigen::Vector2d> colls : collision_states){
+        LOG("Robot");
+        for (const Eigen::Vector2d coll : colls){
+            LOG(coll);
+        }
+    }
+
+    // LOG();
+    benchmark_multiagent_algo(decentral_planner, {problems[i]});
     // LOG(std::pow(2, -1));
     collision_states = {{}};
 

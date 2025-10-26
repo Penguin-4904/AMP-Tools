@@ -34,9 +34,11 @@ class MultiAgentRRTTemplate {
 
 class Timingfunction {
 public:
-    virtual std::vector<Eigen::Vector2d> get_locations(const double& time) = 0;
+    virtual Eigen::VectorXd get_locations(const double& time) = 0;
 
     const std::vector<double>& get_radii() {return radii;}
+
+    virtual size_t get_size() = 0;
 
     virtual ~Timingfunction() {}
 protected:
@@ -72,25 +74,53 @@ class DecentralGBRRT : public MyRRT {
 
 class LerpTimingfunction : public Timingfunction {
     public:
-        virtual std::vector<Eigen::Vector2d> get_locations(const double& time) override;
+        virtual Eigen::VectorXd get_locations(const double& time)  override;
 
-        void add_path(std::vector<Eigen::Vector2d> path, std::vector<double> time, double radius) {
-            paths.push_back(path); times.push_back(time); radii.push_back(radius);
+        void add_path(std::vector<Eigen::Vector2d> path, double radius) {
+
+            size_t iters = std::max(path.size(), paths.size());
+            for (size_t i = 0; i < iters; i++){
+                Eigen::Vector2d path_point;
+                Eigen::VectorXd paths_point;
+                // LOG("add Path");
+                if (i >= path.size()){
+                    path_point = path.back();
+                } else {
+                    path_point = path[i];
+
+                }
+
+                if (i >= paths.size()){
+                    if (paths.size() == 0) {
+                        paths_point = Eigen::VectorXd(2);
+                    } else {
+                        paths_point = paths.back();
+                    }
+                    paths_point(Eigen::lastN(2)) = path_point;
+                    paths.push_back(paths_point);
+                } else {
+                    paths_point = paths[i];
+                    paths_point.conservativeResize(paths_point.size() + 2);
+                    paths_point(Eigen::lastN(2)) = path_point;
+                    paths[i] = paths_point;
+                }
+            }
+            radii.push_back(radius);
         }
 
+        virtual size_t get_size() override {return paths.size();}
+
     private:
-        std::vector<std::vector<Eigen::Vector2d>> paths;
-        std::vector<std::vector<double>> times;
+        std::vector<Eigen::VectorXd> paths;
 };
 
 bool check_decentralmultiagent_collisions_subdivision(const Eigen::Vector2d& q_new, const Eigen::Vector2d& q_near,
-                                                 const double& t_new, const double& t_near, const double& radius,
-                                                 const std::shared_ptr<Timingfunction> timing_function,
-                                                 const std::vector<amp::Obstacle2D>& obstacles, size_t subdivisions);
+                                                      const double& t_new, const double& radius,
+                                                      const std::shared_ptr<Timingfunction> timing_function,
+                                                      const std::vector<amp::Obstacle2D>& obstacles, size_t subdivisions);
 
-bool check_multiagent_collisions_subdivision(const std::vector<std::vector<Eigen::Vector2d>>& paths,
-                                             const std::vector<std::vector<double>>& times, const std::vector<double>& radii,
-                                             const std::vector<amp::Obstacle2D>& obstacles, size_t subdivisions, size_t numAgents);
+bool check_multiagent_collisions_subdivision(const Eigen::VectorXd q_new, const Eigen::VectorXd q_near, const std::vector<double>& radii,
+                                             const std::vector<amp::Obstacle2D>& obstacles, const size_t subdivisions);
 
 bool check_disk_collisions(const Eigen::Vector2d& center, const double& radius, const std::vector<amp::Obstacle2D>& obstacles);
 
