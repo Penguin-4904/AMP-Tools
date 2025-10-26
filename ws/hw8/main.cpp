@@ -18,6 +18,7 @@ void timer_example() {
     std::cout << "Total time since last run: " << Profiler::getTotalProfile("timer") << std::endl;
 }
 
+/// @brief Benchmarks my centralized planner
 void benchmark_multiagent_algo(MyCentralPlanner& algo, const std::vector<MultiAgentProblem2D>& problems, const size_t numBenchmarks = 100){
 
     size_t numProblems = problems.size();
@@ -94,6 +95,7 @@ void benchmark_multiagent_algo(MyCentralPlanner& algo, const std::vector<MultiAg
     }
 }
 
+/// @brief Benchmarks my decentralized planner (slightly different from above)
 void benchmark_multiagent_algo(MyDecentralPlanner& algo, const std::vector<MultiAgentProblem2D>& problems, const size_t numBenchmarks = 100){
 
     size_t numProblems = problems.size();
@@ -202,8 +204,6 @@ int main(int argc, char** argv) {
 
     benchmark_multiagent_algo(central_planner, problems);
     //benchmark_multiagent_algo(central_planner, problems, 1000);
-    //central_planner.set_r(2.5);
-    //central_planner.set_eps(1.25);
 
     // Solve using a decentralized approach
     MyDecentralPlanner decentral_planner;
@@ -218,7 +218,7 @@ int main(int argc, char** argv) {
     // Visualize and grade methods
 
     central_planner.set_r_scaling(true);
-    central_planner.set_n(30000);
+    central_planner.set_n(50000);
 
     Visualizer::saveFigures(true, "hw8_figs");
     HW8::grade(central_planner, decentral_planner, "Katrina.Braun@colorado.edu", argc, argv);

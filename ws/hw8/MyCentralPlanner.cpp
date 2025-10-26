@@ -1,13 +1,12 @@
 #include "MyMultiAgentPlanners.h"
 
+/// @breif Plan multi agent paths with centralized planner
 amp::MultiAgentPath2D MyCentralPlanner::plan(const amp::MultiAgentProblem2D& problem) {
 
-    // std::shared_ptr<amp::Graph<double>> graphPtr = std::make_shared<amp::Graph<double>>();
     double step_dist = r;
 
     std::map<amp::Node, Eigen::VectorXd> nodes;
     std::map<amp::Node, std::vector<amp::Node>> paths;
-//    std::map<amp::Node, std::vector<std::vector<double>>> distances;
 
     size_t numAgents = problem.numAgents();
     if (scale_r){
@@ -25,9 +24,7 @@ amp::MultiAgentPath2D MyCentralPlanner::plan(const amp::MultiAgentProblem2D& pro
     for (size_t j = 0; j < numAgents; j++) {
         amp::Path2D agent_path;
         agent_path.waypoints.push_back(problem.agent_properties[j].q_init);
-        //agent_path.waypoints.push_back(problem.agent_properties[j].q_goal);
         final_path.agent_paths.push_back(agent_path);
-        // LOG("Add Path: " << j);
     }
 
     for (size_t i = 0; i < numAgents; i++) {
@@ -41,7 +38,6 @@ amp::MultiAgentPath2D MyCentralPlanner::plan(const amp::MultiAgentProblem2D& pro
     nodes[0] = init;
     paths[0] = {0};
 
-    // LOG("Start");
     for (size_t i = 1; i < n; i++){
         Eigen::VectorXd point(2 * numAgents);
         if (amp::RNG::randd() < p_goal){
@@ -76,20 +72,8 @@ amp::MultiAgentPath2D MyCentralPlanner::plan(const amp::MultiAgentProblem2D& pro
 
         if (!check_multi_agent_disk_collisions(point, nodes[q_nearest.first], radii, problem.obstacles)){
 
-            // graphPtr->connect(q_nearest.first, i, r);
-
             nodes[i] = point;
-//            distances[i] = dist;
             paths[i] = path;
-            // LOG("# of Nodes: " << i);
-
-            for (size_t j = 0; j < numAgents; j++) {
-                if ((!reached_goal[j]) && ((point({j * 2, j * 2 + 1}) - problem.agent_properties[j].q_goal).norm() < r)){
-                    // LOG(j << " Reached goal w/ " << i << " nodes");
-                    // reached_goal[j] = true;
-                    // return final_path;
-                }
-            }
 
             bool at_goal = true;
             for (size_t j = 0; j < numAgents; j++) {
@@ -105,8 +89,7 @@ amp::MultiAgentPath2D MyCentralPlanner::plan(const amp::MultiAgentProblem2D& pro
                         final_path.agent_paths[j].waypoints.push_back(nodes[path[k]]({j * 2, j * 2 + 1}));
                     }
                 }
-                // LOG("Break");
-                // graphPtr->connect(i, n, (point - goal).norm());
+
                 break;
             }
         }
@@ -117,8 +100,7 @@ amp::MultiAgentPath2D MyCentralPlanner::plan(const amp::MultiAgentProblem2D& pro
     }
 
     size = nodes.size();
-    // LOG("Size: " << size);
-    // LOG("# of Subdivisions: " << subdivisions);
+
     return final_path;
 }
 
@@ -303,8 +285,7 @@ amp::Path2D DecentralGBRRT::plan(const amp::Problem2D& problem) {
     return final_path;
 }
 
-
-
+/// @breif returns the points on all stored paths at the requested index
 Eigen::VectorXd DiscreteTimingfunction::get_locations(const double& time) {
     int t = floor(time);
 

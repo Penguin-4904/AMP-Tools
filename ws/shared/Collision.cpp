@@ -136,7 +136,8 @@ bool check_cell_collisions(const Eigen::Vector2d center, const double width, con
     return false;
 }
 
-
+/// @brief Analytically checks if agent paths between the two points collide with each other or the given obstacles.
+/// ignore is the number of agents to assume are already collision free and only passed to test other agents against.
 bool check_multi_agent_disk_collisions(const Eigen::VectorXd& pointA, const Eigen::VectorXd& pointB,
                                        const std::vector<double>& radii, const std::vector<amp::Obstacle2D>& obstacles,
                                        const size_t ignore){
@@ -164,6 +165,7 @@ bool check_multi_agent_disk_collisions(const Eigen::VectorXd& pointA, const Eige
     return false;
 }
 
+/// @brief Analytically checks if the disk path intersects w/ the given obstacle.
 bool collide_disk_trajectory_object(const Eigen::Vector2d& start, const Eigen::Vector2d& end, const double& radius, const amp::Obstacle2D& obstacle) {
     std::vector<Eigen::Vector2d> vertices = obstacle.verticesCCW();
     size_t numVertices = vertices.size();
@@ -190,6 +192,8 @@ bool collide_disk_trajectory_object(const Eigen::Vector2d& start, const Eigen::V
     return false;
 }
 
+/// @brief Analytically checks if two disk trajectories collide w/ each other
+/// assumes the disks move such that they take the same amount of time from start to end.
 bool collide_disk_trajectories(const Eigen::Vector2d& start_1, const Eigen::Vector2d& end_1, const double& radius_1,
                                const Eigen::Vector2d& start_2, const Eigen::Vector2d& end_2, const double& radius_2){
     double dist_sqrd = (radius_1 + radius_2) * (radius_1 + radius_2);
@@ -218,6 +222,8 @@ bool collide_disk_trajectories(const Eigen::Vector2d& start_1, const Eigen::Vect
     return false;
 }
 
+/// @brief gets the distance from a point to the given line segment.
+/// The sign of the distance shows which side of the half-plane defined by the line segment the point is on.
 double get_closest_dist(const Eigen::Vector2d& point, const Eigen::Vector2d& start, const Eigen::Vector2d& end){
     Eigen::Vector2d n = (end - start).normalized();
     Eigen::Vector2d r = point - start;
@@ -238,10 +244,9 @@ double get_closest_dist(const Eigen::Vector2d& point, const Eigen::Vector2d& sta
     return dist;
 }
 
+/// @breif Given a vector of points, times, and a sample time,
+/// returns the point at the sample time using linear interpolation between points
 Eigen::VectorXd linear_interp(const double& time, const std::vector<Eigen::VectorXd>& points, const std::vector<double>& times) {
-//    if (times.size() != points.size()){
-//        return Eigen::VectorXd::Constant(points[0].size(), NAN);
-//    }
 
     int index = -1;
 

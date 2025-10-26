@@ -10,6 +10,7 @@
 // Overwrite with your MySamplingBasedPlanners.h and MySamplingBasedPlanners.cpp from hw7
 #include "MySamplingBasedPlanners.h" 
 
+/// @brief template class for centralized and decentralized planner
 class MultiAgentRRTTemplate {
     public:
         void set_n(size_t new_n) {n = new_n;}
@@ -28,10 +29,9 @@ class MultiAgentRRTTemplate {
         double eps = 0.25;
         double p_goal = 0.05;
         size_t size = 0;
-
-
 };
 
+/// @brief virtual timing function class
 class Timingfunction {
 public:
     virtual Eigen::VectorXd get_locations(const double& time) = 0;
@@ -47,8 +47,10 @@ protected:
     std::vector<double> radii;
 };
 
+/// @breif Centralized Multi Agent Planner Class
 class MyCentralPlanner : public amp::CentralizedMultiAgentRRT, public MultiAgentRRTTemplate {
     public:
+        /// @breif Plan multi agent paths with centralized planner
         virtual amp::MultiAgentPath2D plan(const amp::MultiAgentProblem2D& problem) override;
 
         void set_r_scaling(bool setting) {scale_r = setting;}
@@ -57,9 +59,10 @@ class MyCentralPlanner : public amp::CentralizedMultiAgentRRT, public MultiAgent
         bool scale_r = false;
 };
 
-
+/// @breif Decentralized Multi Agent Planner Class
 class MyDecentralPlanner : public amp::DecentralizedMultiAgentRRT, public MultiAgentRRTTemplate{
     public:
+        /// @breif Plan multi agent paths with decentralized planner
         virtual amp::MultiAgentPath2D plan(const amp::MultiAgentProblem2D& problem) override;
 
         void set_replan(bool setting) {replan = setting;}
@@ -68,8 +71,11 @@ class MyDecentralPlanner : public amp::DecentralizedMultiAgentRRT, public MultiA
         bool replan = false;
 };
 
+///  @brief virtual class used by decentralized rrt to store already created paths.
 class PathBasedTimingfunction : public Timingfunction{
     public:
+
+        /// @breif adds a path to the stored path list.
         void add_path(std::vector<Eigen::Vector2d> path, double radius) {
 
             size_t iters = std::max(path.size(), paths.size());
@@ -104,38 +110,33 @@ class PathBasedTimingfunction : public Timingfunction{
 
         virtual size_t get_size() override {return paths.size();}
 
-        std::vector<Eigen::Vector2d> get_disks() {return disk_obstacles;}
-
-        void set_disks(std::vector<Eigen::Vector2d> disks, std::vector<double> disk_radii) {
-            disk_obstacles = disks; disk_obstacle_radii = disk_radii;}
-
-        std::vector<double> get_disk_radii() {return disk_obstacle_radii;}
-
     protected:
         std::vector<Eigen::VectorXd> paths;
-        std::vector<Eigen::Vector2d> disk_obstacles;
-        std::vector<double> disk_obstacle_radii;
 };
 
+/// @breif timing function that returns the stored paths at discrete points
 class DiscreteTimingfunction : public PathBasedTimingfunction {
     public:
+        /// @breif returns the points on all stored paths at the requested index
         virtual Eigen::VectorXd get_locations(const double& time) override;
 };
 
+/// @brief RRT used by decentralized RRT to plan paths uses timing function to find past paths.
 class DecentralGBRRT : public MyRRT {
-public:
-    virtual amp::Path2D plan(const amp::Problem2D& problem) override;
+    public:
+        /// @brief plan method for custom RRT used for decentralized planing
+        virtual amp::Path2D plan(const amp::Problem2D& problem) override;
 
-    void set_TimingfunctionPtr(std::shared_ptr<PathBasedTimingfunction> ptr) {TimingfunctionPtr = ptr;}
+        void set_TimingfunctionPtr(std::shared_ptr<PathBasedTimingfunction> ptr) {TimingfunctionPtr = ptr;}
 
-    void set_radius(const double r) {radius = r;}
+        void set_radius(const double r) {radius = r;}
 
-    const std::vector<double> get_dist() {return last_dist_vector;}
+        const std::vector<double> get_dist() {return last_dist_vector;}
 
-private:
-    std::shared_ptr<PathBasedTimingfunction> TimingfunctionPtr;
-    double radius;
-    std::vector<double> last_dist_vector;
+    private:
+        std::shared_ptr<PathBasedTimingfunction> TimingfunctionPtr;
+        double radius;
+        std::vector<double> last_dist_vector;
 };
 
 /* UNUSED Functions
