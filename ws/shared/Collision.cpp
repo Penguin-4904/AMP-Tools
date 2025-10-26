@@ -136,19 +136,25 @@ bool check_cell_collisions(const Eigen::Vector2d center, const double width, con
     return false;
 }
 
-// Not use full
-bool check_multi_agent_disk_collisions(const Eigen::VectorXd& pointA, const Eigen::VectorXd& pointB, const std::vector<double>& radii, const std::vector<amp::Obstacle2D>& obstacles){
+
+bool check_multi_agent_disk_collisions(const Eigen::VectorXd& pointA, const Eigen::VectorXd& pointB,
+                                       const std::vector<double>& radii, const std::vector<amp::Obstacle2D>& obstacles,
+                                       const size_t ignore){
     size_t numObstacles = obstacles.size();
     size_t numAgents = radii.size();
+    if ((numAgents * 2 != pointA.size()) || (numAgents * 2 != pointB.size())){
+        LOG("Collision Detection Point Dimensions Mismatched");
+        return true;
+    }
 
-    for (size_t i = 0; i < numAgents; i++){
+    for (int i = ignore; i < numAgents; i++){
         for (const amp::Obstacle2D& obstacle : obstacles) {
             if (collide_disk_trajectory_object(pointA({i * 2, i * 2 + 1}), pointB({i * 2, i * 2 + 1}), radii[i], obstacle)) {
                 return true;
             }
         }
 
-        for (size_t j = i + 1; j < numAgents; j++){
+        for (int j = i - 1; j >= 0; j--){
             if (collide_disk_trajectories(pointA({i * 2, i * 2 + 1}), pointB({i * 2, i * 2 + 1}), radii[i],
                                           pointA({j * 2, j * 2 + 1}), pointB({j * 2, j * 2 + 1}), radii[j])){
                 return true;
@@ -161,7 +167,6 @@ bool check_multi_agent_disk_collisions(const Eigen::VectorXd& pointA, const Eige
 bool collide_disk_trajectory_object(const Eigen::Vector2d& start, const Eigen::Vector2d& end, const double& radius, const amp::Obstacle2D& obstacle) {
     std::vector<Eigen::Vector2d> vertices = obstacle.verticesCCW();
     size_t numVertices = vertices.size();
-
     for (int i = 0; i < numVertices; i++){
 
         int vertex_1 = i;
@@ -206,7 +211,7 @@ bool collide_disk_trajectories(const Eigen::Vector2d& start_1, const Eigen::Vect
 
     double t = -b/(2 * a);
 
-    if ((t > 0) && (t < 1) && (c - t * b <= dist_sqrd)){
+    if ((t > 0) && (t < 1) && (c + t * b / 2 <= dist_sqrd)){
         return true;
     }
 
@@ -216,6 +221,10 @@ bool collide_disk_trajectories(const Eigen::Vector2d& start_1, const Eigen::Vect
 double get_closest_dist(const Eigen::Vector2d& point, const Eigen::Vector2d& start, const Eigen::Vector2d& end){
     Eigen::Vector2d n = (end - start).normalized();
     Eigen::Vector2d r = point - start;
+
+    if (n.norm() == 0) {
+        return r.norm();
+    }
 
     double dist = r(0) * n(1) - r(1) * n(0);
     double t = r.dot(n)/(end - start).norm();
